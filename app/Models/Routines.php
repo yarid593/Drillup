@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Exercise;
 
-class Category extends Model
+class Routines extends Model
 {
-    protected $table = 'categories';
+    protected $table = 'routines';
 
     public $timestamps = false;
 
@@ -16,11 +15,14 @@ class Category extends Model
         'slug',
         'description',
         'image_url',
-        'icon',
+        'goal',
+        'is_premium',
+        'is_active',
+        'duration_minutes',
         'display_order'
     ];
-    public function exercises()
+    public function routineExercises()
 {
-    return $this->hasMany(Exercise::class);
+    return $this->hasMany(RoutineExercise::class);
 }
 }
