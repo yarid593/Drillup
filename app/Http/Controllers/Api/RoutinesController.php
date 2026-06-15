@@ -9,10 +9,16 @@ use Illuminate\Http\Request;
 
 class RoutinesController extends Controller
 {
-    public function index()
-    {
-        return Routines::orderBy('display_order')->get();
-    }
+   public function index()
+{
+    return Routines::with(
+        'category',
+        'routineExercises.exercise'
+    )
+    ->where('is_active', true)
+    ->orderBy('display_order')
+    ->get();
+}
 
     public function store(Request $request)
     {
@@ -46,15 +52,16 @@ class RoutinesController extends Controller
     }
 
     public function destroy(string $id)
-    {
-        $routine = Routines::findOrFail($id);
+{
+    $routine = Routines::findOrFail($id);
 
-        $routine->delete();
+    $routine->is_active = false;
+    $routine->save();
 
-        return response()->json([
-            'message' => 'Rutina eliminada'
-        ]);
-    }
+    return response()->json([
+        'message' => 'Rutina deshabilitada correctamente'
+    ]);
+}
 }
 
 /* Me gusta la piña */

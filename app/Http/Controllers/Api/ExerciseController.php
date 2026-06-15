@@ -9,9 +9,11 @@ use Illuminate\Http\Request;
 class ExerciseController extends Controller
 {
     public function index()
-    {
-        return Exercise::orderBy('display_order')->get();
-    }
+{
+    return Exercise::where('is_active', true)
+        ->orderBy('display_order')
+        ->get();
+}
 
     public function store(Request $request)
     {
@@ -47,13 +49,14 @@ class ExerciseController extends Controller
     }
 
     public function destroy(string $id)
-    {
-        $exercise = Exercise::findOrFail($id);
+{
+    $exercise = Exercise::findOrFail($id);
 
-        $exercise->delete();
+    $exercise->is_active = false;
+    $exercise->save();
 
-        return response()->json([
-            'message' => 'Ejercicio eliminado'
-        ]);
-    }
+    return response()->json([
+        'message' => 'Ejercicio deshabilitado correctamente'
+    ]);
+}
 }

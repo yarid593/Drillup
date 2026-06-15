@@ -9,9 +9,14 @@ use Illuminate\Http\Request;
 class CategoryController extends Controller
 {
     public function index()
-    {
-        return Category::orderBy('display_order')->get();
-    }
+{
+    return Category::with(
+        'routines',
+        'exercises'
+    )
+    ->orderBy('display_order')
+    ->get();
+}
 
     public function store(Request $request)
 {

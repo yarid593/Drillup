@@ -2,48 +2,52 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\UserRoutine;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    protected $table = 'users';
+
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+    'name',
+    'email',
+    'password',
+    'role',
+    'is_premium',
+    'is_active',
+    'feedback_style',
+    'notifications_enabled',
+    'training_reminder_hour',
+    'birth_date'
+];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+   protected $hidden = [
+    'password'
+];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'is_premium' => 'boolean',
+            'is_active' => 'boolean',
+            'notifications_enabled' => 'boolean',
+            'birth_date' => 'date',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime'
         ];
     }
+
+    public function userRoutines()
+{
+    return $this->hasMany(
+        UserRoutine::class,
+        'user_id'
+    );
+}
 }

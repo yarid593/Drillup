@@ -39,6 +39,9 @@ class Exercise extends Model
 }
 public function routineExercises()
 {
-    return $this->hasMany(RoutineExercise::class);
+    return $this->hasMany(
+        RoutineExercise::class,
+        'exercise_id'
+    );
 }
 }
