@@ -18,11 +18,11 @@ class UserRoutineController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'user_id' => 'required|integer',
-            'routine_id' => 'required|integer',
-            'status' => 'required|in:in_progress,completed'
-        ]);
+          $request->validate([
+        'user_id' => 'required|exists:users,id',
+        'routine_id' => 'required|exists:routines,id',
+        'status' => 'required',
+    ]);
 
         $userRoutine = UserRoutine::create($request->all());
 
@@ -39,6 +39,10 @@ class UserRoutineController extends Controller
 
     public function update(Request $request, string $id)
     {
+          $request->validate([
+    'user_id' => 'sometimes|exists:users,id',
+    'routine_id' => 'sometimes|exists:routines,id',
+      ]);
         $userRoutine = UserRoutine::findOrFail($id);
 
         $userRoutine->update($request->all());

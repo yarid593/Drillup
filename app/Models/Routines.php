@@ -46,5 +46,11 @@ public function category()
         'category_id'
     );
 }
-
+public function workoutLogs()
+{
+    return $this->hasMany(
+        WorkoutLog::class,
+        'routine_id'
+    );
+}
 }

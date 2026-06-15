@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use App\Models\UserRoutine;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $table = 'users';
 
@@ -47,6 +48,20 @@ class User extends Authenticatable
 {
     return $this->hasMany(
         UserRoutine::class,
+        'user_id'
+    );
+}
+public function workoutLogs()
+{
+    return $this->hasMany(
+        WorkoutLog::class,
+        'user_id'
+    );
+}
+public function evaluations()
+{
+    return $this->hasMany(
+        Evaluations::class,
         'user_id'
     );
 }

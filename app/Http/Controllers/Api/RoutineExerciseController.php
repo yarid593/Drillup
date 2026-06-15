@@ -16,9 +16,10 @@ class RoutineExerciseController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'routine_id' => 'required|integer',
-            'exercise_id' => 'required|integer'
-        ]);
+      'routine_id' => 'required|exists:routines,id',
+      'exercise_id' => 'required|exists:exercises,id',
+      'display_order' => 'required|integer|min:1'
+    ]);
 
         $routineExercise = RoutineExercise::create($request->all());
 
@@ -32,6 +33,10 @@ class RoutineExerciseController extends Controller
 
     public function update(Request $request, string $id)
     {
+        $request->validate([
+      'routine_id' => 'sometimes|exists:routines,id',
+      'exercise_id' => 'sometimes|exists:exercises,id'
+    ]);
         $routineExercise = RoutineExercise::findOrFail($id);
 
         $routineExercise->update($request->all());

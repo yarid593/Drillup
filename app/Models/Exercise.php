@@ -44,4 +44,11 @@ public function routineExercises()
         'exercise_id'
     );
 }
+public function evaluations()
+{
+    return $this->hasMany(
+        Evaluations::class,
+        'exercise_id'
+    );
+}
 }

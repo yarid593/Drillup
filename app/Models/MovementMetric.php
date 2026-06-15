@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class MovementMetric extends Model
+{
+    protected $table = 'movement_metrics';
+
+    public $timestamps = false;
+
+    protected $fillable = [
+        'evaluation_id',
+        'knee_angle',
+        'elbow_angle',
+        'speed',
+        'stability'
+    ];
+
+    public function evaluation()
+    {
+        return $this->belongsTo(
+            Evaluations::class,
+            'evaluation_id'
+        );
+    }
+}
