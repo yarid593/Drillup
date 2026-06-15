@@ -8,7 +8,7 @@ class WorkoutLog extends Model
 {
     protected $table = 'workout_logs';
 
-    public $timestamps = false;
+    public $timestamps = true;
 
     protected $fillable = [
         'user_id',

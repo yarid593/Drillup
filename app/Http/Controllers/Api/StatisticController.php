@@ -4,17 +4,19 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Statistics;
+use Illuminate\Http\Request;
 
 class StatisticController extends Controller
 {
-    public function index()
-    {
-        return Statistics::with('user')->get();
-    }
-
-    public function show(string $id)
+    public function index(Request $request)
     {
         return Statistics::with('user')
-            ->findOrFail($id);
+            ->where(
+                'user_id',
+                $request->user()->id
+            )
+            ->first();
     }
+
+    
 }

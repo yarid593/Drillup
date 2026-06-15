@@ -57,11 +57,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
    
     Route::get('/statistics', [StatisticController::class, 'index']);
-    Route::get('/statistics/{id}', [StatisticController::class, 'show']);
+    
 
     
     Route::get('/streaks', [StreakController::class, 'index']);
-    Route::get('/streaks/{id}', [StreakController::class, 'show']);
+    
 });
 /* Rutas para admins, para evitar que cualquier usuario o visitante pueda eliminar, crear o actualizar cosas */
 
@@ -107,10 +107,10 @@ Route::middleware([
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{id}', [UserController::class, 'update']);
 
-    Route::patch('/users/{id}/disable', [
-        UserController::class,
-        'disable'
-    ]);
+   Route::delete('/users/{id}', [
+    UserController::class,
+    'destroy'
+]);
 
     Route::apiResource('routine-exercises', RoutineExerciseController::class);
 });
@@ -125,7 +125,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('evaluations', EvaluationController::class);
 
     Route::apiResource('movement-metrics', MovementMetricController::class);
-
-    
 
 });

@@ -6,34 +6,51 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Statistics;
+use App\Models\Streak;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6'
-        ]);
+{
+    $request->validate([
+        'name' => 'required|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|min:6'
+    ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+    $user = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => 'user',
+        'is_premium' => false,
+        'is_active' => true
+    ]);
 
-            'role' => 'user',
-            'is_premium' => false,
-            'is_active' => true
-        ]);
+    Statistics::create([
+        'user_id' => $user->id,
+        'completed_exercises' => 0,
+        'training_time_minutes' => 0,
+        'total_points' => 0,
+        'completed_evaluations' => 0,
+        'average_score' => 0
+    ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+    Streak::create([
+        'user_id' => $user->id,
+        'current_streak' => 0,
+        'longest_streak' => 0,
+        'last_workout_date' => null
+    ]);
 
-        return response()->json([
-            'user' => $user,
-            'token' => $token
-        ], 201);
-    }
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'user' => $user,
+        'token' => $token
+    ], 201);
+}
 
     public function login(Request $request)
     {
@@ -46,6 +63,12 @@ class AuthController extends Controller
             'email',
             $request->email
         )->first();
+
+        if ($user && !$user->is_active) {
+    return response()->json([
+        'message' => 'Usuario deshabilitado'
+    ], 403);
+}
 
         if (
             !$user ||
