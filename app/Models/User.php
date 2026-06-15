@@ -65,4 +65,18 @@ public function evaluations()
         'user_id'
     );
 }
+public function statistic()
+{
+    return $this->hasOne(
+        Statistics::class,
+        'user_id'
+    );
+}
+public function streak()
+{
+    return $this->hasOne(
+        Streak::class,
+        'user_id'
+    );
+}
 }
