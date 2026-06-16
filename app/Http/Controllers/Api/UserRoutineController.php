@@ -8,13 +8,26 @@ use Illuminate\Http\Request;
 
 class UserRoutineController extends Controller
 {
-    public function index()
-    {
+    public function index(Request $request)
+{
+    if ($request->user()->role === 'admin') {
+
         return UserRoutine::with(
             'user',
             'routine'
         )->get();
     }
+
+    return UserRoutine::with(
+        'user',
+        'routine'
+    )
+    ->where(
+        'user_id',
+        $request->user()->id
+    )
+    ->get();
+}
 
     public function store(Request $request)
     {
@@ -29,13 +42,24 @@ class UserRoutineController extends Controller
         return response()->json($userRoutine, 201);
     }
 
-    public function show(string $id)
-    {
-        return UserRoutine::with(
-            'user',
-            'routine'
-        )->findOrFail($id);
+    public function show(Request $request, string $id)
+{
+    $userRoutine = UserRoutine::with(
+        'user',
+        'routine'
+    )->findOrFail($id);
+
+    if (
+        $request->user()->role !== 'admin' &&
+        $userRoutine->user_id !== $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
     }
+
+    return $userRoutine;
+}
 
     public function update(Request $request, string $id)
     {

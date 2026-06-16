@@ -8,12 +8,27 @@ use Illuminate\Http\Request;
 
 class MovementMetricController extends Controller
 {
-    public function index()
-    {
+    public function index(Request $request)
+{
+    if ($request->user()->role === 'admin') {
+
         return MovementMetric::with(
             'evaluation'
         )->get();
     }
+
+    return MovementMetric::whereHas(
+        'evaluation',
+        function ($query) use ($request) {
+            $query->where(
+                'user_id',
+                $request->user()->id
+            );
+        }
+    )
+    ->with('evaluation')
+    ->get();
+}
 
     public function store(Request $request)
     {
@@ -36,12 +51,24 @@ class MovementMetricController extends Controller
         );
     }
 
-    public function show(string $id)
-    {
-        return MovementMetric::with(
-            'evaluation'
-        )->findOrFail($id);
+    public function show(Request $request, string $id)
+{
+    $movementMetric = MovementMetric::with(
+        'evaluation'
+    )->findOrFail($id);
+
+    if (
+        $request->user()->role !== 'admin' &&
+        $movementMetric->evaluation->user_id !==
+        $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
     }
+
+    return $movementMetric;
+}
 
     public function update(Request $request, string $id)
     {

@@ -11,14 +11,26 @@ use Carbon\Carbon;
 
 class WorkoutLogController extends Controller
 {
-    public function index()
-    {
+    public function index(Request $request)
+{
+    if ($request->user()->role === 'admin') {
+
         return WorkoutLog::with(
             'user',
             'routine'
         )->get();
     }
 
+    return WorkoutLog::with(
+        'user',
+        'routine'
+    )
+    ->where(
+        'user_id',
+        $request->user()->id
+    )
+    ->get();
+}
    public function store(Request $request)
 {
     $request->validate([
@@ -31,10 +43,16 @@ class WorkoutLogController extends Controller
 
     $workoutLog = WorkoutLog::create($request->all());
 
-    $statistic = Statistics::where(
-        'user_id',
-        $request->user_id
-    )->first();
+    $statistic = Statistics::firstOrCreate(
+    ['user_id' => $request->user_id],
+    [
+        'completed_exercises' => 0,
+        'training_time_minutes' => 0,
+        'total_points' => 0,
+        'completed_evaluations' => 0,
+        'average_score' => 0
+    ]
+);
 
     $statistic->completed_exercises += $request->exercises_done;
     $statistic->training_time_minutes += $request->duration_minutes;
@@ -42,10 +60,14 @@ class WorkoutLogController extends Controller
 
     $statistic->save();
 
-    $streak = Streak::where(
-        'user_id',
-        $request->user_id
-    )->first();
+   $streak = Streak::firstOrCreate(
+    ['user_id' => $request->user_id],
+    [
+        'current_streak' => 0,
+        'longest_streak' => 0,
+        'last_workout_date' => null
+    ]
+);
 
     $today = Carbon::today();
 
@@ -84,14 +106,24 @@ class WorkoutLogController extends Controller
 
     return response()->json($workoutLog, 201);
 }
+public function show(Request $request, string $id)
+{
+    $workoutLog = WorkoutLog::with(
+        'user',
+        'routine'
+    )->findOrFail($id);
 
-    public function show(string $id)
-    {
-        return WorkoutLog::with(
-            'user',
-            'routine'
-        )->findOrFail($id);
+    if (
+        $request->user()->role !== 'admin' &&
+        $workoutLog->user_id !== $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
     }
+
+    return $workoutLog;
+}
 
     public function update(Request $request, string $id)
     {

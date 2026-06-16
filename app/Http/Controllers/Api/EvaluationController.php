@@ -9,14 +9,26 @@ use App\Models\Statistics;
 
 class EvaluationController extends Controller
 {
-    public function index()
-    {
+    public function index(Request $request)
+{
+    if ($request->user()->role === 'admin') {
+
         return Evaluations::with(
             'user',
             'exercise'
         )->get();
     }
 
+    return Evaluations::with(
+        'user',
+        'exercise'
+    )
+    ->where(
+        'user_id',
+        $request->user()->id
+    )
+    ->get();
+}
     public function store(Request $request)
 {
     $request->validate([
@@ -24,8 +36,7 @@ class EvaluationController extends Controller
         'exercise_id' => 'required|exists:exercises,id',
         'score' => 'required|numeric|min:0|max:100',
         'observaciones' => 'required|string',
-        'evaluated_at' => 'required|date',
-        'evaluation_type' => 'required|in:manual,automatic'
+        'evaluated_at' => 'required|date'
     ]);
 
     $evaluation = Evaluations::create($request->all());
@@ -52,13 +63,24 @@ class EvaluationController extends Controller
     return response()->json($evaluation, 201);
 }
 
-    public function show(string $id)
-    {
-        return Evaluations::with(
-            'user',
-            'exercise'
-        )->findOrFail($id);
+    public function show(Request $request, string $id)
+{
+    $evaluation = Evaluations::with(
+        'user',
+        'exercise'
+    )->findOrFail($id);
+
+    if (
+        $request->user()->role !== 'admin' &&
+        $evaluation->user_id !== $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
     }
+
+    return $evaluation;
+}
 
     public function update(Request $request, string $id)
 {
