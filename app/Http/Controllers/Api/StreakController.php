@@ -9,14 +9,19 @@ use Illuminate\Http\Request;
 class StreakController extends Controller
 {
     public function index(Request $request)
-    {
-        return Streak::with('user')
-            ->where(
-                'user_id',
-                $request->user()->id
-            )
-            ->first();
+{
+    if ($request->user()->role === 'admin') {
+
+        return Streak::with('user')->get();
     }
+
+    return Streak::with('user')
+        ->where(
+            'user_id',
+           $request->user()->id
+        )
+        ->first();
+}
 
     
 }

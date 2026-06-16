@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MovementMetric;
 use Illuminate\Http\Request;
+use App\Models\Evaluations;
 
 class MovementMetricController extends Controller
 {
@@ -31,25 +32,41 @@ class MovementMetricController extends Controller
 }
 
     public function store(Request $request)
-    {
-        $request->validate([
-    'evaluation_id' => 'required|exists:evaluations,id',
+{
+    $request->validate([
+        'evaluation_id' => 'required|exists:evaluations,id',
+        'knee_angle' => 'required|numeric|min:0|max:180',
+        'elbow_angle' => 'required|numeric|min:0|max:180',
+        'speed' => 'required|numeric|min:0|max:100',
+        'stability' => 'required|numeric|min:0|max:100'
+    ]);
 
-    'knee_angle' => 'required|numeric|min:0|max:180',
-    'elbow_angle' => 'required|numeric|min:0|max:180',
+    $evaluation = Evaluations::findOrFail(
+        $request->evaluation_id
+    );
 
-    'speed' => 'required|numeric|min:0|max:100',
-    'stability' => 'required|numeric|min:0|max:100'
-]);
-        $movementMetric = MovementMetric::create(
-            $request->all()
-        );
-
-        return response()->json(
-            $movementMetric,
-            201
-        );
+    if (
+        $request->user()->role !== 'admin' &&
+        $evaluation->user_id !== $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
     }
+
+    $movementMetric = MovementMetric::create([
+        'evaluation_id' => $request->evaluation_id,
+        'knee_angle' => $request->knee_angle,
+        'elbow_angle' => $request->elbow_angle,
+        'speed' => $request->speed,
+        'stability' => $request->stability
+    ]);
+
+    return response()->json(
+        $movementMetric,
+        201
+    );
+}
 
     public function show(Request $request, string $id)
 {
@@ -70,28 +87,42 @@ class MovementMetricController extends Controller
     return $movementMetric;
 }
 
-    public function update(Request $request, string $id)
-    {
-        $movementMetric = MovementMetric::findOrFail($id);
+   public function update(Request $request, string $id)
+{
+    $movementMetric = MovementMetric::with(
+        'evaluation'
+    )->findOrFail($id);
 
-          $request->validate([
-      'evaluation_id' => 'sometimes|exists:evaluations,id',
+    
+    if (
+        $request->user()->role !== 'admin' &&
+        $movementMetric->evaluation->user_id !==
+        $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
+    }
 
-      'knee_angle' => 'sometimes|numeric|min:0|max:180',
-      'elbow_angle' => 'sometimes|numeric|min:0|max:180',
-
-      'speed' => 'sometimes|numeric|min:0|max:100',
-      'stability' => 'sometimes|numeric|min:0|max:100'
+    $request->validate([
+        'knee_angle' => 'sometimes|numeric|min:0|max:180',
+        'elbow_angle' => 'sometimes|numeric|min:0|max:180',
+        'speed' => 'sometimes|numeric|min:0|max:100',
+        'stability' => 'sometimes|numeric|min:0|max:100'
     ]);
 
-        $movementMetric->update(
-            $request->all()
-        );
+    
+    $movementMetric->update([
+        'knee_angle' => $request->knee_angle ?? $movementMetric->knee_angle,
+        'elbow_angle' => $request->elbow_angle ?? $movementMetric->elbow_angle,
+        'speed' => $request->speed ?? $movementMetric->speed,
+        'stability' => $request->stability ?? $movementMetric->stability
+    ]);
 
-        return response()->json(
-            $movementMetric
-        );
-    }
+    return response()->json(
+        $movementMetric
+    );
+}
 
     public function destroy(string $id)
     {

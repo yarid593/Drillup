@@ -32,12 +32,31 @@ class UserRoutineController extends Controller
     public function store(Request $request)
     {
           $request->validate([
-        'user_id' => 'required|exists:users,id',
         'routine_id' => 'required|exists:routines,id',
         'status' => 'required',
     ]);
 
-        $userRoutine = UserRoutine::create($request->all());
+    if (
+    UserRoutine::where(
+        'user_id',
+        $request->user()->id
+    )
+    ->where(
+        'routine_id',
+        $request->routine_id
+    )
+    ->exists()
+) {
+    return response()->json([
+        'message' => 'La rutina ya está asignada al usuario'
+    ], 409);
+}
+
+        $userRoutine = UserRoutine::create([
+    'user_id' => $request->user()->id,
+    'routine_id' => $request->routine_id,
+    'status' => $request->status
+]);
 
         return response()->json($userRoutine, 201);
     }
@@ -62,17 +81,30 @@ class UserRoutineController extends Controller
 }
 
     public function update(Request $request, string $id)
-    {
-          $request->validate([
-    'user_id' => 'sometimes|exists:users,id',
-    'routine_id' => 'sometimes|exists:routines,id',
-      ]);
-        $userRoutine = UserRoutine::findOrFail($id);
+{
+    $userRoutine = UserRoutine::findOrFail($id);
 
-        $userRoutine->update($request->all());
-
-        return response()->json($userRoutine);
+    if (
+        $request->user()->role !== 'admin' &&
+        $userRoutine->user_id !== $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
     }
+
+    $request->validate([
+        'routine_id' => 'sometimes|exists:routines,id',
+        'status' => 'sometimes'
+    ]);
+
+    $userRoutine->update([
+        'routine_id' => $request->routine_id ?? $userRoutine->routine_id,
+        'status' => $request->status ?? $userRoutine->status
+    ]);
+
+    return response()->json($userRoutine);
+}
 
     public function destroy(string $id)
     {

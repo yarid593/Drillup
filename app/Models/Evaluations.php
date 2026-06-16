@@ -15,7 +15,6 @@ class Evaluations extends Model
         'exercise_id',
         'score',
         'observaciones',
-        'evaluation_type',
         'evaluated_at'
     ];
 

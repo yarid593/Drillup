@@ -32,26 +32,31 @@ class EvaluationController extends Controller
     public function store(Request $request)
 {
     $request->validate([
-        'user_id' => 'required|exists:users,id',
         'exercise_id' => 'required|exists:exercises,id',
         'score' => 'required|numeric|min:0|max:100',
         'observaciones' => 'required|string',
         'evaluated_at' => 'required|date'
     ]);
 
-    $evaluation = Evaluations::create($request->all());
+    $evaluation = Evaluations::create([
+    'user_id' => $request->user()->id,
+    'exercise_id' => $request->exercise_id,
+    'score' => $request->score,
+    'observaciones' => $request->observaciones,
+    'evaluated_at' => $request->evaluated_at
+]);
 
     $statistic = Statistics::where(
         'user_id',
-        $request->user_id
+        $request->user()->id
     )->first();
 
     $statistic->completed_evaluations += 1;
 
     $averageScore = Evaluations::where(
-        'user_id',
-        $request->user_id
-    )->avg('score');
+    'user_id',
+    $request->user()->id
+)->avg('score');
 
     $statistic->average_score = round(
         $averageScore,
@@ -82,18 +87,31 @@ class EvaluationController extends Controller
     return $evaluation;
 }
 
-    public function update(Request $request, string $id)
+   public function update(Request $request, string $id)
 {
     $evaluation = Evaluations::findOrFail($id);
 
+    
+    if (
+        $request->user()->role !== 'admin' &&
+        $evaluation->user_id !== $request->user()->id
+    ) {
+        return response()->json([
+            'message' => 'Acceso denegado'
+        ], 403);
+    }
+
     $request->validate([
-        'user_id' => 'sometimes|exists:users,id',
-        'exercise_id' => 'sometimes|exists:exercises,id',
-        'score' => 'sometimes|numeric|min:0|max:100'
+        'score' => 'sometimes|numeric|min:0|max:100',
+        'observaciones' => 'sometimes|string'
     ]);
 
-    $evaluation->update($request->all());
+    $evaluation->update([
+        'score' => $request->score ?? $evaluation->score,
+        'observaciones' => $request->observaciones ?? $evaluation->observaciones
+    ]);
 
+    
     $statistic = Statistics::where(
         'user_id',
         $evaluation->user_id
@@ -114,31 +132,8 @@ class EvaluationController extends Controller
 
    public function destroy(string $id)
 {
-    $evaluation = Evaluations::findOrFail($id);
-
-    $userId = $evaluation->user_id;
-
-    $evaluation->delete();
-
-    $statistic = Statistics::where(
-        'user_id',
-        $userId
-    )->first();
-
-    $statistic->completed_evaluations = Evaluations::where(
-        'user_id',
-        $userId
-    )->count();
-
-    $statistic->average_score = Evaluations::where(
-        'user_id',
-        $userId
-    )->avg('score') ?? 0;
-
-    $statistic->save();
-
     return response()->json([
-        'message' => 'Evaluación eliminada'
-    ]);
+        'message' => 'No se permite eliminar evaluaciones'
+    ], 403);
 }
 }
