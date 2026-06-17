@@ -41,31 +41,29 @@ class MovementMetricController extends Controller
         'stability' => 'required|numeric|min:0|max:100'
     ]);
 
-    $evaluation = Evaluations::findOrFail(
+   $evaluation = Evaluations::findOrFail(
+    $request->evaluation_id
+);
+
+if (
+    $request->user()->role !== 'admin' &&
+    $evaluation->user_id !== $request->user()->id
+) {
+    return response()->json([
+        'message' => 'Acceso denegado'
+    ], 403);
+}
+
+if (
+    MovementMetric::where(
+        'evaluation_id',
         $request->evaluation_id
-    );
-
-    if (
-        $request->user()->role !== 'admin' &&
-        $evaluation->user_id !== $request->user()->id
-    ) {
-        return response()->json([
-            'message' => 'Acceso denegado'
-        ], 403);
-    }
-
-    $movementMetric = MovementMetric::create([
-        'evaluation_id' => $request->evaluation_id,
-        'knee_angle' => $request->knee_angle,
-        'elbow_angle' => $request->elbow_angle,
-        'speed' => $request->speed,
-        'stability' => $request->stability
-    ]);
-
-    return response()->json(
-        $movementMetric,
-        201
-    );
+    )->exists()
+) {
+    return response()->json([
+        'message' => 'La evaluación ya tiene métricas registradas'
+    ], 409);
+}
 }
 
     public function show(Request $request, string $id)

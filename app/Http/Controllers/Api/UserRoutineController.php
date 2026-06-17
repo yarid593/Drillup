@@ -29,37 +29,41 @@ class UserRoutineController extends Controller
     ->get();
 }
 
-    public function store(Request $request)
-    {
-          $request->validate([
+   public function store(Request $request)
+{
+    $request->validate([
         'routine_id' => 'required|exists:routines,id',
         'status' => 'required',
     ]);
 
+    // Evita asignar la misma rutina varias veces
     if (
-    UserRoutine::where(
-        'user_id',
-        $request->user()->id
-    )
-    ->where(
-        'routine_id',
-        $request->routine_id
-    )
-    ->exists()
-) {
-    return response()->json([
-        'message' => 'La rutina ya está asignada al usuario'
-    ], 409);
-}
-
-        $userRoutine = UserRoutine::create([
-    'user_id' => $request->user()->id,
-    'routine_id' => $request->routine_id,
-    'status' => $request->status
-]);
-
-        return response()->json($userRoutine, 201);
+        UserRoutine::where(
+            'user_id',
+            $request->user()->id
+        )
+        ->where(
+            'routine_id',
+            $request->routine_id
+        )
+        ->exists()
+    ) {
+        return response()->json([
+            'message' => 'La rutina ya está asignada al usuario'
+        ], 409);
     }
+
+    $userRoutine = UserRoutine::create([
+        'user_id' => $request->user()->id,
+        'routine_id' => $request->routine_id,
+        'status' => $request->status
+    ]);
+
+    return response()->json(
+        $userRoutine,
+        201
+    );
+}
 
     public function show(Request $request, string $id)
 {
