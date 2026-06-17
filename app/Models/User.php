@@ -79,4 +79,11 @@ public function streak()
         'user_id'
     );
 }
+public function evaluationVideos()
+{
+    return $this->hasMany(
+        EvaluationVideo::class,
+        'user_id'
+    );
+}
 }

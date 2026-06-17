@@ -51,4 +51,19 @@ public function evaluations()
         'exercise_id'
     );
 }
+public function biomechanicalRule()
+{
+    return $this->hasOne(
+        BiomechanicalRule::class,
+        'exercise_id'
+    );
+}
+
+public function evaluationVideos()
+{
+    return $this->hasMany(
+        EvaluationVideo::class,
+        'exercise_id'
+    );
+}
 }

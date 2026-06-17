@@ -4,19 +4,27 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Evaluations extends Model
+class EvaluationVideo extends Model
 {
-    protected $table = 'evaluations';
+    protected $table = 'evaluation_videos';
 
     public $timestamps = false;
 
     protected $fillable = [
+        'evaluation_id',
         'user_id',
         'exercise_id',
-        'score',
-        'observaciones',
-        'evaluated_at'
+        'video_path',
+        'uploaded_at'
     ];
+
+    public function evaluation()
+    {
+        return $this->belongsTo(
+            Evaluations::class,
+            'evaluation_id'
+        );
+    }
 
     public function user()
     {
@@ -33,18 +41,4 @@ class Evaluations extends Model
             'exercise_id'
         );
     }
-    public function movementMetrics()
-{
-    return $this->hasOne(
-        MovementMetric::class,
-        'evaluation_id'
-    );
-}
-public function video()
-{
-    return $this->hasOne(
-        EvaluationVideo::class,
-        'evaluation_id'
-    );
-}
 }
