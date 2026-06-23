@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Exercise;
-use App\Models\Routine;
+use App\Models\Routines;
 
 class Category extends Model
 {

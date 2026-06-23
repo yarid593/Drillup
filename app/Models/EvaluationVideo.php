@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\Evaluations;
+use App\Models\User;
+use App\Models\Exercise;
+
 class EvaluationVideo extends Model
 {
     protected $table = 'evaluation_videos';
@@ -16,6 +20,10 @@ class EvaluationVideo extends Model
         'exercise_id',
         'video_path',
         'uploaded_at'
+    ];
+
+    protected $casts = [
+        'uploaded_at' => 'datetime'
     ];
 
     public function evaluation()

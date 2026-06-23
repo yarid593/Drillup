@@ -20,6 +20,9 @@ class Media extends Model
 
     public function exercise()
     {
-        return $this->belongsTo(Exercise::class);
+        return $this->belongsTo(
+            Exercise::class,
+            'exercise_id'
+        );
     }
 }

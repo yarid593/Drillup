@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Routine;
+
+use App\Models\Routines;
 use App\Models\Exercise;
 
 class RoutineExercise extends Model
@@ -21,19 +22,20 @@ class RoutineExercise extends Model
         'sets',
         'rest_secs'
     ];
-   public function routine()
-{
-    return $this->belongsTo(
-        Routines::class,
-        'routine_id'
-    );
-}
 
-public function exercise()
-{
-    return $this->belongsTo(
-        Exercise::class,
-        'exercise_id'
-    );
-}
+    public function routine()
+    {
+        return $this->belongsTo(
+            Routines::class,
+            'routine_id'
+        );
+    }
+
+    public function exercise()
+    {
+        return $this->belongsTo(
+            Exercise::class,
+            'exercise_id'
+        );
+    }
 }

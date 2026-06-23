@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Evaluations;
 
 class MovementMetric extends Model
 {
@@ -16,6 +17,13 @@ class MovementMetric extends Model
         'elbow_angle',
         'speed',
         'stability'
+    ];
+
+    protected $casts = [
+        'knee_angle' => 'float',
+        'elbow_angle' => 'float',
+        'speed' => 'float',
+        'stability' => 'float'
     ];
 
     public function evaluation()

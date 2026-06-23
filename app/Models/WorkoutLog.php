@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\User;
+use App\Models\Routines;
+
 class WorkoutLog extends Model
 {
     protected $table = 'workout_logs';
@@ -18,6 +21,11 @@ class WorkoutLog extends Model
         'exercises_done',
         'completion_pct',
         'notes'
+    ];
+
+    protected $casts = [
+        'completed_at' => 'datetime',
+        'completion_pct' => 'float'
     ];
 
     public function user()

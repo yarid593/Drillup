@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class Streak extends Model
 {
     protected $table = 'streaks';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -15,6 +17,11 @@ class Streak extends Model
         'longest_streak',
         'last_workout_date',
         'updated_at'
+    ];
+
+    protected $casts = [
+        'last_workout_date' => 'date',
+        'updated_at' => 'datetime'
     ];
 
     public function user()

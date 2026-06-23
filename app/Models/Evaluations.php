@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Models\User;
+use App\Models\Exercise;
+use App\Models\MovementMetric;
+use App\Models\EvaluationVideo;
+
 class Evaluations extends Model
 {
     protected $table = 'evaluations';
@@ -16,6 +21,11 @@ class Evaluations extends Model
         'score',
         'observaciones',
         'evaluated_at'
+    ];
+
+    protected $casts = [
+        'score' => 'float',
+        'evaluated_at' => 'datetime'
     ];
 
     public function user()
@@ -33,18 +43,20 @@ class Evaluations extends Model
             'exercise_id'
         );
     }
-    public function movementMetrics()
-{
-    return $this->hasOne(
-        MovementMetric::class,
-        'evaluation_id'
-    );
-}
-public function video()
-{
-    return $this->hasOne(
-        EvaluationVideo::class,
-        'evaluation_id'
-    );
-}
+
+    public function movementMetric()
+    {
+        return $this->hasOne(
+            MovementMetric::class,
+            'evaluation_id'
+        );
+    }
+
+    public function video()
+    {
+        return $this->hasOne(
+            EvaluationVideo::class,
+            'evaluation_id'
+        );
+    }
 }

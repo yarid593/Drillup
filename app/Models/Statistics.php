@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 
 class Statistics extends Model
 {
@@ -17,6 +18,10 @@ class Statistics extends Model
         'total_points',
         'completed_evaluations',
         'average_score'
+    ];
+
+    protected $casts = [
+        'average_score' => 'float'
     ];
 
     public function user()
