@@ -701,7 +701,7 @@ function initLogout() {
       localStorage.removeItem("usuario");
       localStorage.removeItem("rol");
       localStorage.removeItem("nombre");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
   });
 }
@@ -853,7 +853,7 @@ function syncAdminLink() {
     const isAdmin = rol === "admin";
 
     if (isAdmin) {
-      container.innerHTML = '<a href="admin.html"><span class="nav-icon">⚙️</span>Panel Admin</a>';
+      container.innerHTML = '<a href="/admin"><span class="nav-icon">⚙</span>Panel Admin</a>';
     } else {
       container.innerHTML = "";
     }

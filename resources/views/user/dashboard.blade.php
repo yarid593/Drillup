@@ -664,9 +664,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 <script src="{{ asset('assets/js/auth.js') }}" defer></script>
 <script src="{{ asset('assets/js/page-protect.js') }}" defer></script>
-<script src="{{ asset('assets/js/data/exercisesData.js') }}" defer></script>
-<script src="{{ asset('assets/js/data/signalsData.js') }}" defer></script>
-<script src="{{ asset('assets/js/data/playsData.js') }}" defer></script>
 <script src="{{ asset('assets/js/app.js') }}" defer></script>
 <script src="{{ asset('assets/js/exercises.js') }}" defer></script>
 <script src="{{ asset('assets/js/signals.js') }}" defer></script>

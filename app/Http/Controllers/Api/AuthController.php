@@ -21,68 +21,69 @@ class AuthController extends Controller
     }
 
 
-    public function firebase(Request $request)
+   public function firebase(Request $request)
 {
     $request->validate([
-        'idToken' => 'required'
+        'idToken' => 'required|string'
     ]);
 
     try {
 
         $verifiedToken = $this->firebase->verifyIdToken($request->idToken);
 
+        return response()->json([
+    'step' => 1
+]);
+
         $uid = $verifiedToken->claims()->get('sub');
 
         $firebaseUser = $this->firebase->getUser($uid);
 
+        $user = User::where('email', $firebaseUser->email)->first();
+
+        if (!$user) {
+
+            $user = User::create([
+                'name' => $firebaseUser->displayName ?? 'Usuario',
+                'email' => $firebaseUser->email,
+                'password' => Hash::make(Str::random(40)),
+                'role' => 'user',
+                'is_active' => true
+            ]);
+
+            Statistics::create([
+                'user_id' => $user->id,
+                'completed_exercises' => 0,
+                'training_time_minutes' => 0,
+                'total_points' => 0,
+                'completed_evaluations' => 0,
+                'average_score' => 0
+            ]);
+
+            Streak::create([
+                'user_id' => $user->id,
+                'current_streak' => 0,
+                'longest_streak' => 0,
+                'last_workout_date' => null
+            ]);
+        }
+
+        $user->tokens()->delete();
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token
+        ]);
+
     } catch (\Throwable $e) {
 
         return response()->json([
-            'message' => 'Token de Firebase inválido'
-        ], 401);
+            'message' => $e->getMessage()
+        ], 500);
 
     }
-
-    $user = User::where('email', $firebaseUser->email)->first();
-
-    if (!$user) {
-
-        $user = User::create([
-            'name' => $firebaseUser->displayName ?? 'Usuario',
-            'email' => $firebaseUser->email,
-            'password' => bcrypt(Str::random(40)),
-            'role' => 'user',
-            'is_active' => true,
-            'is_premium' => false
-        ]);
-
-        Statistics::create([
-            'user_id' => $user->id,
-            'completed_exercises' => 0,
-            'training_time_minutes' => 0,
-            'total_points' => 0,
-            'completed_evaluations' => 0,
-            'average_score' => 0
-        ]);
-
-        Streak::create([
-            'user_id' => $user->id,
-            'current_streak' => 0,
-            'longest_streak' => 0,
-            'last_workout_date' => null
-        ]);
-    }
-
-    
-    $user->tokens()->delete();
-
-    
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'user' => $user,
-        'token' => $token
-    ]);
 }
 
     public function register(Request $request)
@@ -98,7 +99,6 @@ class AuthController extends Controller
         'email' => $request->email,
         'password' => Hash::make($request->password),
         'role' => 'user',
-        'is_premium' => false,
         'is_active' => true
     ]);
 

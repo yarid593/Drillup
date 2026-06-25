@@ -140,15 +140,35 @@ function syncProfileWithFirebase(user) {
 }
 
 function getSession() {
-  const uid = localStorage.getItem("uid");
-  if (!uid) return null;
-  return {
-    uid,
-    email: localStorage.getItem("usuario") || "",
-    nombre: localStorage.getItem("nombre") || "Usuario",
-    foto: localStorage.getItem("foto") || "",
-    rol: localStorage.getItem("rol") || "user"
-  };
+
+    const token = localStorage.getItem("auth_token");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
+        return null;
+    }
+
+    try {
+
+        const parsed = JSON.parse(user);
+
+        return {
+            uid: parsed.id,
+            email: parsed.email,
+            nombre: parsed.name,
+            foto: parsed.photo_url || "",
+            rol: parsed.role
+        };
+
+    } catch {
+
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user");
+
+        return null;
+
+    }
+
 }
 
 function isLoggedIn() {
@@ -174,7 +194,11 @@ async function loginUser(email, password) {
 
 async function loginWithGoogle() {
 
-    const provider = new firebase.auth.GoogleAuthProvider();
+   const provider = new firebase.auth.GoogleAuthProvider();
+
+provider.setCustomParameters({
+    prompt: "select_account"
+});
 
     try {
 
@@ -194,17 +218,31 @@ async function loginWithGoogle() {
         });
 
         if (!response.ok) {
-            throw new Error('No fue posible autenticar con Laravel');
+
+            console.error("STATUS:", response.status);
+
+            const error = await response.text();
+
+            console.error(error);
+
+            throw new Error("No fue posible autenticar con Laravel");
+
         }
 
         const data = await response.json();
+        console.log(data);
 
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem("auth_token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        console.log(localStorage.getItem("auth_token"));
+        console.log(localStorage.getItem("user"));
 
         return data.user;
 
     } catch (err) {
+
+        console.error(err);
 
         throw normalizeFirebaseError(err);
 
@@ -459,18 +497,23 @@ async function logout() {
   clearSession();
   const c = document.querySelector("#adminLinkContainer");
   if (c) c.innerHTML = "";
-  window.location.href = "login.html";
+  window.location.href = "/login";
 }
 
 function protectPage(allowedRoles) {
-  const session = getSession();
-  if (!session) {
-    window.location.href = "login.html";
-    return;
-  }
-  if (allowedRoles && !allowedRoles.includes(session.rol)) {
-    window.location.href = "login.html";
-  }
+
+    
+
+    const session = getSession();
+
+    if (!session) {
+        window.location.href = "/login";
+        return;
+    }
+
+    if (allowedRoles && !allowedRoles.includes(session.rol)) {
+        window.location.href = "/login";
+    }
 }
 
 function normalizeFirebaseError(err) {

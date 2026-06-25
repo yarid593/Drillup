@@ -50,8 +50,8 @@
   }
 
   function redirectAfterLogin() {
-    window.location.href = "index.html#usuario";
-  }
+    window.location.href = "/dashboard";
+}
 
   function deleteGuest(id) {
     const index = getGuestIndex();
@@ -105,7 +105,7 @@
       const sessionUid = localStorage.getItem("uid");
       if (sessionUid === id) {
         clearSession();
-        window.location.href = "login.html";
+        window.location.href = "/login";
         return;
       }
 
@@ -234,25 +234,27 @@
 
   // --- Google Sign-In ---
   googleBtn.addEventListener("click", async () => {
+
     hideLoginError();
     setLoading(googleBtn, true, "Ingresando...");
 
-    let user;
     try {
-      user = await loginWithGoogle();
+
+        await loginWithGoogle();
+
+        redirectAfterLogin();
+
     } catch (err) {
-      if (err.message !== "Cerraste la ventana de Google antes de completar el inicio.") {
+
         showLoginError(err.message);
-      }
-      setLoading(googleBtn, false, "Continuar con Google");
-      return;
+
+    } finally {
+
+        setLoading(googleBtn, false, "Continuar con Google");
+
     }
 
-    // Session is saved by onAuthStateChanged in auth.js
-    await new Promise(r => setTimeout(r, 200));
-    setLoading(googleBtn, false, "Continuar con Google");
-    redirectAfterLogin();
-  });
+});;
 
   // --- Guest entry ---
   guestEntryBtn.addEventListener("click", showGuestFlow);

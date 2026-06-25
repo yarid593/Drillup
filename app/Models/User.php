@@ -22,41 +22,32 @@ class User extends Authenticatable
     protected $table = 'users';
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
-        'birth_date',
-        'gender',
-        'height_cm',
-        'weight_kg',
-        'is_premium',
-        'is_active',
-        'feedback_style',
-        'notifications_enabled',
-        'training_reminder_hour'
-    ];
+    'name',
+    'email',
+    'password',
+    'role',
+    'birth_date',
+    'gender',
+    'height_cm',
+    'weight_kg',
+    'is_active'
+];
 
     protected $hidden = [
         'password'
     ];
 
     protected function casts(): array
-    {
-        return [
-            'is_premium' => 'boolean',
-            'is_active' => 'boolean',
-            'notifications_enabled' => 'boolean',
-
-            'birth_date' => 'date',
-
-            'height_cm' => 'float',
-            'weight_kg' => 'float',
-
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime'
-        ];
-    }
+{
+    return [
+        'is_active' => 'boolean',
+        'birth_date' => 'date',
+        'height_cm' => 'float',
+        'weight_kg' => 'float',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
+    ];
+}
 
     public function userRoutines()
     {

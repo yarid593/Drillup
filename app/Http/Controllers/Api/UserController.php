@@ -29,7 +29,6 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
 
             'role' => $request->role ?? 'user',
-            'is_premium' => $request->is_premium ?? false,
             'is_active' => $request->is_active ?? true,
 
             'feedback_style' => $request->feedback_style,
@@ -52,7 +51,6 @@ class UserController extends Controller
        'name' => 'sometimes|max:255',
         'email' => 'sometimes|email|unique:users,email,' . $id,
         'role' => 'sometimes|in:user,admin',
-        'is_premium' => 'sometimes|boolean',
         'is_active' => 'sometimes|boolean'
     ]);
         $user = User::findOrFail($id);

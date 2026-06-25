@@ -115,6 +115,12 @@
 @endsection
 
 @push('scripts')
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
 <script src="{{ asset('assets/js/auth.js') }}"></script>
 <script type="module" src="{{ asset('assets/js/login.js') }}"></script>
+
 @endpush
