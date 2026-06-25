@@ -8,9 +8,83 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Statistics;
 use App\Models\Streak;
+use Kreait\Firebase\Contract\Auth as FirebaseAuth;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+     protected FirebaseAuth $firebase;
+
+    public function __construct(FirebaseAuth $firebase)
+    {
+        $this->firebase = $firebase;
+    }
+
+
+    public function firebase(Request $request)
+{
+    $request->validate([
+        'idToken' => 'required'
+    ]);
+
+    try {
+
+        $verifiedToken = $this->firebase->verifyIdToken($request->idToken);
+
+        $uid = $verifiedToken->claims()->get('sub');
+
+        $firebaseUser = $this->firebase->getUser($uid);
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'message' => 'Token de Firebase inválido'
+        ], 401);
+
+    }
+
+    $user = User::where('email', $firebaseUser->email)->first();
+
+    if (!$user) {
+
+        $user = User::create([
+            'name' => $firebaseUser->displayName ?? 'Usuario',
+            'email' => $firebaseUser->email,
+            'password' => bcrypt(Str::random(40)),
+            'role' => 'user',
+            'is_active' => true,
+            'is_premium' => false
+        ]);
+
+        Statistics::create([
+            'user_id' => $user->id,
+            'completed_exercises' => 0,
+            'training_time_minutes' => 0,
+            'total_points' => 0,
+            'completed_evaluations' => 0,
+            'average_score' => 0
+        ]);
+
+        Streak::create([
+            'user_id' => $user->id,
+            'current_streak' => 0,
+            'longest_streak' => 0,
+            'last_workout_date' => null
+        ]);
+    }
+
+    
+    $user->tokens()->delete();
+
+    
+    $token = $user->createToken('auth_token')->plainTextToken;
+
+    return response()->json([
+        'user' => $user,
+        'token' => $token
+    ]);
+}
+
     public function register(Request $request)
 {
     $request->validate([
@@ -82,7 +156,9 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
+       $user->tokens()->delete();
+
+       $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'user' => $user,
@@ -101,3 +177,4 @@ class AuthController extends Controller
         ]);
     }
 }
+

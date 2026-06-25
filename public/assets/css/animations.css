@@ -1,0 +1,320 @@
+.animation-stage {
+  position: relative;
+  overflow: hidden;
+  min-height: 210px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(255, 255, 255, 0.12) 50%, transparent calc(50% + 1px)),
+    radial-gradient(circle at center, transparent 32%, rgba(255, 255, 255, 0.11) 33%, transparent 34%),
+    color-mix(in srgb, var(--court) 28%, var(--panel));
+}
+
+.large-stage {
+  min-height: 390px;
+}
+
+.large-stage .stickman {
+  transform: translate(-50%, -50%) scale(1.55);
+}
+
+.stickman {
+  --x: 50%;
+  --y: 50%;
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 76px;
+  height: 150px;
+  transform: translate(-50%, -50%);
+}
+
+.head,
+.torso,
+.arm,
+.leg,
+.ball {
+  position: absolute;
+  display: block;
+}
+
+.head {
+  left: 27px;
+  top: 4px;
+  width: 24px;
+  height: 24px;
+  border: 4px solid var(--figure);
+  border-radius: 50%;
+}
+
+.torso {
+  left: 36px;
+  top: 30px;
+  width: 5px;
+  height: 52px;
+  border-radius: 3px;
+  background: var(--figure);
+  transform-origin: top center;
+}
+
+.arm,
+.leg {
+  width: 5px;
+  border-radius: 3px;
+  background: var(--figure);
+  transform-origin: top center;
+}
+
+.arm {
+  top: 38px;
+  height: 48px;
+}
+
+.arm-left {
+  left: 37px;
+  transform: rotate(42deg);
+}
+
+.arm-right {
+  left: 37px;
+  transform: rotate(-42deg);
+}
+
+.leg {
+  top: 78px;
+  height: 60px;
+}
+
+.leg-left {
+  left: 37px;
+  transform: rotate(25deg);
+}
+
+.leg-right {
+  left: 37px;
+  transform: rotate(-25deg);
+}
+
+.ball {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--figure-inverse);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.dribble .arm-right {
+  animation: dribbleArm 900ms infinite ease-in-out;
+}
+
+.dribble .ball {
+  left: 58px;
+  top: 78px;
+  animation: dribbleBall 900ms infinite ease-in-out;
+}
+
+.shot .arm-left,
+.shot .arm-right {
+  animation: shootArms 1.5s infinite ease-in-out;
+}
+
+.shot .ball {
+  left: 38px;
+  top: 10px;
+  animation: shootBall 1.5s infinite ease-in-out;
+}
+
+.double-stage .left-player {
+  --x: 31%;
+}
+
+.receiver {
+  --x: 70%;
+}
+
+.passes .arm-right {
+  animation: passArm 1.4s infinite ease-in-out;
+}
+
+.passes .ball {
+  left: 42px;
+  top: 62px;
+  animation: passBall 1.4s infinite ease-in-out;
+}
+
+.box {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  width: 82px;
+  height: 44px;
+  border: 4px solid color-mix(in srgb, var(--figure) 75%, transparent);
+  border-radius: 6px;
+  transform: translateX(-50%);
+}
+
+.plyo {
+  animation: plyoJump 1.2s infinite ease-in-out;
+}
+
+.plyo .arm-left {
+  animation: jumpArmLeft 1.2s infinite ease-in-out;
+}
+
+.plyo .arm-right {
+  animation: jumpArmRight 1.2s infinite ease-in-out;
+}
+
+.speed-line,
+.floor-line {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 36px;
+  height: 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--figure) 35%, transparent);
+}
+
+.speed {
+  animation: speedRun 1s infinite ease-in-out;
+}
+
+.speed .arm-left,
+.speed .leg-right {
+  animation: limbForward 550ms infinite alternate ease-in-out;
+}
+
+.speed .arm-right,
+.speed .leg-left {
+  animation: limbBack 550ms infinite alternate ease-in-out;
+}
+
+.core {
+  left: 52%;
+  top: 62%;
+  transform: translate(-50%, -50%) rotate(88deg);
+  animation: plankPulse 1.4s infinite ease-in-out;
+}
+
+.core .ball {
+  display: none;
+}
+
+.mobility {
+  animation: mobilityBody 1.7s infinite ease-in-out;
+}
+
+.mobility .arm-left {
+  animation: mobilityArmLeft 1.7s infinite ease-in-out;
+}
+
+.mobility .arm-right {
+  animation: mobilityArmRight 1.7s infinite ease-in-out;
+}
+
+.mobility .leg-left {
+  animation: mobilityLegLeft 1.7s infinite ease-in-out;
+}
+
+.mobility .leg-right {
+  animation: mobilityLegRight 1.7s infinite ease-in-out;
+}
+
+@keyframes dribbleBall {
+  0%, 100% { transform: translateY(-22px); }
+  50% { transform: translateY(48px); }
+}
+
+@keyframes dribbleArm {
+  0%, 100% { transform: rotate(-28deg); }
+  50% { transform: rotate(-68deg); }
+}
+
+@keyframes shootArms {
+  0%, 100% { transform: rotate(-28deg); }
+  45%, 65% { transform: rotate(172deg); }
+}
+
+@keyframes shootBall {
+  0% { transform: translate(0, 48px); opacity: 1; }
+  55% { transform: translate(35px, -70px); opacity: 1; }
+  75%, 100% { transform: translate(58px, -90px); opacity: 0; }
+}
+
+@keyframes passArm {
+  0%, 100% { transform: rotate(-34deg); }
+  50% { transform: rotate(-86deg); }
+}
+
+@keyframes passBall {
+  0% { transform: translate(0, 0); }
+  55%, 100% { transform: translate(142px, 8px); }
+}
+
+@keyframes plyoJump {
+  0%, 100% { transform: translate(-50%, -42%); }
+  50% { transform: translate(-50%, -78%); }
+}
+
+@keyframes jumpArmLeft {
+  0%, 100% { transform: rotate(44deg); }
+  50% { transform: rotate(150deg); }
+}
+
+@keyframes jumpArmRight {
+  0%, 100% { transform: rotate(-44deg); }
+  50% { transform: rotate(-150deg); }
+}
+
+@keyframes speedRun {
+  0%, 100% { transform: translate(-58%, -50%) skewX(-8deg); }
+  50% { transform: translate(-42%, -50%) skewX(-8deg); }
+}
+
+@keyframes limbForward {
+  from { transform: rotate(58deg); }
+  to { transform: rotate(-52deg); }
+}
+
+@keyframes limbBack {
+  from { transform: rotate(-58deg); }
+  to { transform: rotate(52deg); }
+}
+
+@keyframes plankPulse {
+  0%, 100% { transform: translate(-50%, -50%) rotate(88deg); }
+  50% { transform: translate(-50%, -56%) rotate(88deg); }
+}
+
+@keyframes mobilityBody {
+  0%, 100% { transform: translate(-50%, -50%) rotate(-10deg); }
+  50% { transform: translate(-50%, -50%) rotate(14deg); }
+}
+
+@keyframes mobilityArmLeft {
+  0%, 100% { transform: rotate(110deg); }
+  50% { transform: rotate(28deg); }
+}
+
+@keyframes mobilityArmRight {
+  0%, 100% { transform: rotate(-34deg); }
+  50% { transform: rotate(-118deg); }
+}
+
+@keyframes mobilityLegLeft {
+  0%, 100% { transform: rotate(38deg); }
+  50% { transform: rotate(12deg); }
+}
+
+@keyframes mobilityLegRight {
+  0%, 100% { transform: rotate(-18deg); }
+  50% { transform: rotate(-45deg); }
+}
+
+@media (max-width: 880px) {
+  .large-stage {
+    min-height: 330px;
+  }
+}

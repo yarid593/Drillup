@@ -18,12 +18,27 @@ use App\Http\Controllers\Api\StreakController;
 use App\Http\Controllers\Api\PlayController;
 use App\Http\Controllers\Api\RefereeSignalController;
 /* Rutas publicas */
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-
+Route::prefix('auth')->group(function () {
+  
+  Route::post('/register', [AuthController::class, 'register']);
+  
+  Route::post('/login', [AuthController::class, 'login']);
+  
+  Route::post('/firebase', [AuthController::class, 'firebase']);
+  
+  });
+  Route::get('/firebase-test', function () {
+      return response()->json([
+          'status' => 'Firebase funcionando'
+      ]);
+  });
 /* Para los usuarios ya autenticados */
 
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('/me', function (Request $request) {
+    return response()->json($request->user());
+});
 
     Route::get('/profile', function (Request $request) {
         return $request->user();

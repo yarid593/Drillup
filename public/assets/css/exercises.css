@@ -1,0 +1,348 @@
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.7fr);
+  gap: 24px;
+  align-items: end;
+  padding: 18px 0 28px;
+}
+
+.intro h2 {
+  max-width: 760px;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  line-height: 1.02;
+}
+
+.intro p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.03rem;
+  line-height: 1.5;
+}
+
+.progress-container {
+  width: min(650px, 100%);
+  margin-top: 18px;
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.progress-track {
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.35), 0 0 20px rgba(242, 106, 33, 0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+  box-shadow: 0 0 18px rgba(242, 106, 33, 0.55), 0 0 35px rgba(242, 106, 33, 0.3), 0 0 60px rgba(242, 106, 33, 0.12);
+}
+
+.exercise-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.exercise-card,
+.routine-card {
+  display: grid;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--panel) 88%, var(--court)), var(--panel)), var(--panel);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.exercise-card {
+  gap: 16px;
+  min-height: 340px;
+  padding: 18px;
+}
+
+.exercise-card:hover,
+.routine-card:hover,
+.routine-card.active {
+  border-color: color-mix(in srgb, var(--accent) 62%, white);
+  transform: translateY(-8px);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.45), 0 0 35px rgba(242, 106, 33, 0.22);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-title h3 {
+  font-size: 1.18rem;
+}
+
+.card-title span {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.exercise-card button {
+  align-self: end;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.routine-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(150px, 1fr));
+  gap: 14px;
+}
+
+.routine-card {
+  gap: 12px;
+  min-height: 236px;
+  padding: 14px;
+  background: var(--panel);
+}
+
+.routine-card .animation-stage {
+  min-height: 130px;
+}
+
+.routine-card h3 {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.25;
+}
+
+.routine-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.primary-action {
+  justify-self: center;
+  min-width: 220px;
+}
+
+.detail-top,
+.detail-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(280px, 0.7fr);
+  gap: 28px;
+  align-items: start;
+}
+
+.detail-animation,
+.detail-copy {
+  display: grid;
+  gap: 16px;
+}
+
+.detail-copy {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.detail-copy h3,
+.help-panel h3 {
+  margin: 0;
+}
+
+.help-panel {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-meta span {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+}
+
+.timer-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.timer-control span {
+  padding: 0;
+  border: 0;
+}
+
+.timer-control button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.timer-control strong {
+  min-width: 58px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-control.repetition-mode button {
+  background: var(--accent-2);
+}
+
+.drillup-toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.drillup-toast {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 24px;
+  border-radius: 16px;
+  background: rgba(20, 20, 30, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  animation: drillup-toast-in 0.35s ease;
+  max-width: 380px;
+}
+
+.drillup-toast.celebration {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 1px solid rgba(242, 106, 33, 0.35);
+  box-shadow: 0 8px 40px rgba(242, 106, 33, 0.25);
+}
+
+.drillup-toast-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.drillup-toast-body {
+  display: grid;
+  gap: 2px;
+}
+
+.drillup-toast-title {
+  font-weight: 700;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.drillup-toast-message {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+@keyframes drillup-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes drillup-toast-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(60px);
+  }
+}
+
+@media (max-width: 880px) {
+  .intro,
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-grid,
+  .routine-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .exercise-grid,
+  .routine-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exercise-card {
+    min-height: 320px;
+  }
+
+  .routine-card {
+    min-height: 250px;
+  }
+
+  .detail-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .detail-controls button {
+    width: 100%;
+  }
+}
