@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\StatisticController;
 use App\Http\Controllers\Api\StreakController;
 use App\Http\Controllers\Api\PlayController;
 use App\Http\Controllers\Api\RefereeSignalController;
+use App\Http\Controllers\Api\EvaluationVideoController;
+
 /* Rutas publicas */
 Route::prefix('auth')->group(function () {
   
@@ -25,6 +27,8 @@ Route::prefix('auth')->group(function () {
   Route::post('/login', [AuthController::class, 'login']);
   
   Route::post('/firebase', [AuthController::class, 'firebase']);
+
+  
   
   });
   Route::get('/firebase-test', function () {
@@ -32,6 +36,12 @@ Route::prefix('auth')->group(function () {
           'status' => 'Firebase funcionando'
       ]);
   });
+
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+Route::get('/exercises', [ExerciseController::class, 'index']);
+Route::get('/exercises/{id}', [ExerciseController::class, 'show']);
 /* Para los usuarios ya autenticados */
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -46,15 +56,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    
-    Route::get('/categories', [CategoryController::class, 'index']);
-    Route::get('/categories/{id}', [CategoryController::class, 'show']);
+    Route::apiResource('evaluation-videos', EvaluationVideoController::class);
 
-    
-    Route::get('/exercises', [ExerciseController::class, 'index']);
-    Route::get('/exercises/{id}', [ExerciseController::class, 'show']);
-
-   
     Route::get('/media', [MediaController::class, 'index']);
     Route::get('/media/{id}', [MediaController::class, 'show']);
 
@@ -89,6 +92,7 @@ Route::middleware([
     Route::post('/categories', [CategoryController::class, 'store']);
     Route::put('/categories/{id}', [CategoryController::class, 'update']);
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    
 
     // Exercises
     Route::post('/exercises', [ExerciseController::class, 'store']);
@@ -121,6 +125,8 @@ Route::middleware([
 
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{id}', [UserController::class, 'update']);
+
+   
 
    Route::delete('/users/{id}', [
     UserController::class,

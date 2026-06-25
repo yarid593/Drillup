@@ -21,16 +21,26 @@ let currentStepIndex = 0;
 let playInterval = null;
 
 function stopPlayAuto() {
+
   if (playInterval) {
     clearInterval(playInterval);
     playInterval = null;
   }
 
-  playAutoButton.textContent = currentStepIndex >= getCurrentPlay().steps.length - 1 ? "↺ Reiniciar" : "▶ Reproducir";
+  const play = getCurrentPlay();
+
+  if (!play) {
+    return;
+  }
+
+  playAutoButton.textContent =
+    currentStepIndex >= play.steps.length - 1
+      ? "↺ Reiniciar"
+      : "▶ Reproducir";
 }
 
 function getCurrentPlay() {
-  return plays[currentPlayIndex];
+  return plays[currentPlayIndex] || null;
 }
 
 function courtSvg(content = "", mini = false) {

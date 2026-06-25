@@ -196,10 +196,39 @@ const CATEGORY_TO_KEY = {
   "Movilidad": "movilidad"
 };
 
-function getExercisesForCategory(categoryName) {
-  const key = CATEGORY_TO_KEY[categoryName];
-  if (!key || !window.DRILLUP_EXERCISES) return [];
-  return window.DRILLUP_EXERCISES.categories[key]?.exercises || [];
+let apiCategories = {};
+
+async function loadCategories() {
+
+    const headers = {
+        Accept: "application/json"
+    };
+
+    const token = localStorage.getItem("auth_token");
+
+    if (token) {
+        headers.Authorization = `Bearer ${token}`;
+    }
+
+    const response = await fetch("/api/categories", {
+        headers
+    });
+
+    if (!response.ok) {
+        throw new Error("No fue posible cargar las categorías.");
+    }
+
+    const data = await response.json();
+
+    apiCategories = {};
+
+    data.forEach(category => {
+        apiCategories[category.slug] = category.exercises;
+    });
+}
+
+function getExercisesForCategory(categoryKey) {
+    return apiCategories[categoryKey] || [];
 }
 
 function normalizeCategory(cat) {
@@ -211,73 +240,131 @@ function normalizeCategory(cat) {
 /* ── Upload handler ── */
 
 function initVideoUpload() {
-  const fileInput = document.querySelector("#videoFileInput");
-  const dateInput = document.querySelector("#videoDateInput");
-  const categoryInput = document.querySelector("#videoCategoryInput");
-  const exerciseInput = document.querySelector("#videoExerciseInput");
-  const notesInput = document.querySelector("#videoNotesInput");
-  const form = document.querySelector("#videoUploadForm");
 
-  if (!fileInput || !form) return;
+    const fileInput = document.querySelector("#videoFileInput");
+    const dateInput = document.querySelector("#videoDateInput");
+    const categoryInput = document.querySelector("#videoCategoryInput");
+    const exerciseInput = document.querySelector("#videoExerciseInput");
+    const notesInput = document.querySelector("#videoNotesInput");
+    const form = document.querySelector("#videoUploadForm");
 
-  form.addEventListener("submit", (e) => e.preventDefault());
+    if (!fileInput || !form) return;
 
-  categoryInput?.addEventListener("change", () => {
-    const category = categoryInput.value;
-    const exercises = getExercisesForCategory(category);
+    
+    categoryInput.innerHTML = "";
 
-    exerciseInput.innerHTML = `<option value="">${exercises.length ? "Seleccionar ejercicio" : "Sin ejercicios disponibles"}</option>`;
-    exercises.forEach(ex => {
-      const opt = document.createElement("option");
-      opt.value = ex.name;
-      opt.textContent = ex.name;
-      exerciseInput.appendChild(opt);
+    Object.keys(apiCategories).forEach(slug => {
+
+        const option = document.createElement("option");
+
+        option.value = slug;
+
+        option.textContent = slug
+            .replaceAll("-", " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
+
+        categoryInput.appendChild(option);
+
     });
-    exerciseInput.disabled = !exercises.length;
-  });
 
-  fileInput.addEventListener("change", async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
+    form.addEventListener("submit", (e) => e.preventDefault());
 
-    const category = categoryInput?.value;
-    if (!category) {
-      alert("Debes seleccionar un tipo de entrenamiento.");
-      fileInput.value = "";
-      return;
+    categoryInput.addEventListener("change", () => {
+
+        const exercises = getExercisesForCategory(categoryInput.value);
+
+        exerciseInput.innerHTML = `<option value="">${
+            exercises.length
+                ? "Seleccionar ejercicio"
+                : "Sin ejercicios disponibles"
+        }</option>`;
+
+        exercises.forEach(ex => {
+
+            const option = document.createElement("option");
+
+            option.value = ex.id;
+            option.textContent = ex.name;
+
+            exerciseInput.appendChild(option);
+
+        });
+
+        exerciseInput.disabled = exercises.length === 0;
+
+    });
+
+    
+    categoryInput.dispatchEvent(new Event("change"));
+
+    fileInput.addEventListener("change", async () => {
+
+        const file = fileInput.files?.[0];
+        if (!file) return;
+
+        const category = categoryInput.value;
+        const exercise = exerciseInput.value;
+
+        if (!category) {
+            alert("Debes seleccionar un tipo de entrenamiento.");
+            fileInput.value = "";
+            return;
+        }
+
+        if (!exercise) {
+            alert("Debes seleccionar un ejercicio.");
+            fileInput.value = "";
+            return;
+        }
+
+        try {
+
+    const formData = new FormData();
+
+    formData.append("video", file);
+    formData.append("exercise_id", exercise);
+
+    const token = localStorage.getItem("auth_token");
+
+    const response = await fetch("/api/evaluation-videos", {
+
+        method: "POST",
+
+        headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json"
+        },
+
+        body: formData
+
+    });
+
+    if (!response.ok) {
+        throw new Error("Error al subir el video.");
     }
 
-    const exercise = exerciseInput?.value;
-    if (!exercise) {
-      alert("Debes seleccionar un ejercicio específico.");
-      fileInput.value = "";
-      return;
-    }
+    showVideoFeedback("Video subido correctamente");
 
-    try {
-      await saveVideo({
-        id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${file.name}`,
-        name: file.name,
-        date: dateInput?.value || new Date().toISOString().split("T")[0],
-        category,
-        exercise,
-        description: `Video de ${category}: ${exercise}`,
-        notes: notesInput?.value.trim() || "",
-        file,
-        createdAt: Date.now()
-      });
-
-      showVideoFeedback("Video guardado correctamente");
-    } catch {
-      showVideoFeedback("Error al guardar el video", true);
-    }
-
-    fileInput.value = "";
-    if (notesInput) notesInput.value = "";
-    if (categoryInput) categoryInput.value = "";
-    if (exerciseInput) { exerciseInput.innerHTML = '<option value="">Primero selecciona una categoría</option>'; exerciseInput.disabled = true; }
     await renderVideos();
-  });
+
+} catch (error) {
+
+    console.error(error);
+
+    showVideoFeedback("Error al subir el video", true);
+
+}
+
+        fileInput.value = "";
+        notesInput.value = "";
+
+        categoryInput.selectedIndex = 0;
+        categoryInput.dispatchEvent(new Event("change"));
+
+        await renderVideos();
+
+    });
+
 }
 
 function showVideoFeedback(msg, isError) {
@@ -634,13 +721,18 @@ function initAIChart() {
 
 /* ── Init ── */
 
-function initVideosModule() {
-  const backFromAnalyze = document.querySelector("#backFromAnalyzeAI");
-  const backFromHistory = document.querySelector("#backFromAIHistory");
-  const analyzeBtn = document.querySelector("#analyzeVideosBtn");
-  const historyBtn = document.querySelector("#aiHistoryBtn");
-  const filter = document.querySelector("#analyzeCategoryFilter");
-  const newAnalysisBtn = document.querySelector("#newAnalysisBtn");
+async function initVideosModule() {
+
+    await loadCategories();
+
+    await renderVideos(); 
+
+    const backFromAnalyze = document.querySelector("#backFromAnalyzeAI");
+    const backFromHistory = document.querySelector("#backFromAIHistory");
+    const analyzeBtn = document.querySelector("#analyzeVideosBtn");
+    const historyBtn = document.querySelector("#aiHistoryBtn");
+    const filter = document.querySelector("#analyzeCategoryFilter");
+    const newAnalysisBtn = document.querySelector("#newAnalysisBtn");
 
   backFromAnalyze?.addEventListener("click", () => {
     showVideosMain();
@@ -669,4 +761,4 @@ function initVideosModule() {
   initVideoUpload();
 }
 
-initVideosModule();
+initVideosModule().catch(console.error);

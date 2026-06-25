@@ -59,4 +59,9 @@ class CategoryController extends Controller
             'message' => 'Categoría eliminada'
         ]);
     }
+
+    public function frontend()
+{
+    // aquí construiremos el mismo JSON del frontend
+}
 }

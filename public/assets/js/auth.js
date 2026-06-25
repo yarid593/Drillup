@@ -141,34 +141,44 @@ function syncProfileWithFirebase(user) {
 
 function getSession() {
 
+    
     const token = localStorage.getItem("auth_token");
     const user = localStorage.getItem("user");
 
-    if (!token || !user) {
-        return null;
+    if (token && user) {
+        try {
+
+            const parsed = JSON.parse(user);
+
+            return {
+                uid: parsed.id,
+                email: parsed.email,
+                nombre: parsed.name,
+                foto: parsed.photo_url || "",
+                rol: parsed.role
+            };
+
+        } catch {
+
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("user");
+        }
     }
 
-    try {
+    
+    const uid = localStorage.getItem("uid");
 
-        const parsed = JSON.parse(user);
-
+    if (uid && uid.startsWith("guest_")) {
         return {
-            uid: parsed.id,
-            email: parsed.email,
-            nombre: parsed.name,
-            foto: parsed.photo_url || "",
-            rol: parsed.role
+            uid: uid,
+            email: "",
+            nombre: localStorage.getItem("nombre") || "Invitado",
+            foto: "",
+            rol: "guest"
         };
-
-    } catch {
-
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user");
-
-        return null;
-
     }
 
+    return null;
 }
 
 function isLoggedIn() {
@@ -229,14 +239,16 @@ provider.setCustomParameters({
 
         }
 
+
         const data = await response.json();
+
+        console.log("DATA COMPLETA:");
         console.log(data);
+        console.log(JSON.stringify(data, null, 2));
 
         localStorage.setItem("auth_token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        console.log(localStorage.getItem("auth_token"));
-        console.log(localStorage.getItem("user"));
 
         return data.user;
 
@@ -502,7 +514,7 @@ async function logout() {
 
 function protectPage(allowedRoles) {
 
-    
+  
 
     const session = getSession();
 

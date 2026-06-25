@@ -224,14 +224,23 @@ function applyAvatar(target, profile, fallbackText) {
 }
 
 function syncProfileUI(profile = getProfile()) {
-  const fullName = `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Usuario";
-  const initials = `${profile.firstName?.[0] || "U"}${profile.lastName?.[0] || ""}`.toUpperCase().slice(0, 2);
+      const session = getSession();
+
+    const firstName = profile.firstName || session?.nombre || "Usuario";
+    const lastName = profile.lastName || "";
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    const initials = `${firstName[0] || "U"}${lastName[0] || ""}`
+        .toUpperCase()
+        .slice(0, 2);
+
+    const sessionEmail = session?.email || "";
   const age = profile.age || calculateAge(profile.birthDate);
-  const sessionEmail = getSession()?.email || "";
 
   setText("#profileName", fullName);
-  setText("#profileEmail", sessionEmail || profile.email || "sin-correo@drillup.com");
-  setText(".user-email", sessionEmail || profile.email || "sin-correo@drillup.com");
+  setText("#profileEmail", sessionEmail || profile.email || "Invitado");
+  setText(".user-email", sessionEmail || profile.email || "Invitado");
 
   applyAvatar(document.querySelector("#profileAvatar"), profile, initials);
   applyAvatar(document.querySelector(".user-avatar"), profile, initials);
@@ -476,7 +485,6 @@ function renderUsageWeek() {
   const weekMax = Math.max(...weeklyMins, 1);
   const { max: maxScale, step } = chooseScale(weekMax);
 
-  // Render grid lines at exact percentage positions
   const gridContainer = document.querySelector(".screen-grid-lines");
   if (gridContainer) {
     gridContainer.innerHTML = "";
@@ -928,4 +936,27 @@ if (document.readyState === "loading") {
   window.addEventListener("DOMContentLoaded", safeInit);
 } else {
   safeInit();
+}
+
+async function logout() {
+
+    try {
+
+        if (!isGuest() && auth.currentUser) {
+            await auth.signOut();
+        }
+
+    } catch (e) {
+        console.warn(e);
+    }
+
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("uid");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("nombre");
+    localStorage.removeItem("foto");
+    localStorage.removeItem("rol");
+
+    window.location.href = "/login";
 }

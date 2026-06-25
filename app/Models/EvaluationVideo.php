@@ -19,7 +19,8 @@ class EvaluationVideo extends Model
         'user_id',
         'exercise_id',
         'video_path',
-        'uploaded_at'
+        'uploaded_at',
+        'analysis_status'
     ];
 
     protected $casts = [

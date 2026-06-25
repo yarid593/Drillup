@@ -1,5 +1,4 @@
-const exercisesData = window.DRILLUP_EXERCISES;
-const categories = exercisesData.categories;
+let categories = {};
 
 const exerciseGrid = document.querySelector("#exerciseGrid");
 const routineGrid = document.querySelector("#routineGrid");
@@ -23,6 +22,55 @@ const progressLabel = document.querySelector("#progressLabel");
 const progressFill = document.querySelector("#progressFill");
 
 let currentCategoryKey = "dribbling";
+async function loadCategories() {
+
+    console.log("Cargando categorías...");
+
+    const response = await fetch("/api/categories", {
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Accept: "application/json"
+        }
+    });
+
+    console.log(response.status);
+
+    const data = await response.json();
+
+    categories = {};
+
+    data.forEach(category => {
+
+        categories[category.slug] = {
+
+            title: category.name,
+            description: category.description,
+            animation: category.icon,
+
+            exercises: category.exercises.map(exercise => ({
+
+            id: exercise.id,
+
+            name: exercise.name,
+            summary: exercise.instructions,
+            description: exercise.description,
+            help: exercise.tips,
+            level: "Intermedio",
+
+            time:
+                exercise.measure_type === "time"
+                    ? `${exercise.duration_secs} segundos`
+                    : `${exercise.reps} repeticiones`
+
+        }))
+
+        };
+
+    });
+
+    console.log(categories);
+
+}
 let currentExerciseIndex = 0;
 let timerInterval = null;
 let timerSeconds = 0;
@@ -48,7 +96,7 @@ function syncExerciseProgress() {
   const completed = getCompletedExercises();
   const progress = Math.round((completed.length / getTotalExercises()) * 100);
 
-  exercisesData.progress = progress;
+  
   progressLabel.textContent = `${progress}%`;
   progressFill.style.width = `${progress}%`;
 
@@ -290,7 +338,8 @@ function startTimer() {
     }
   }, 1000);
 }
-
+console.log("CATEGORIAS:");
+console.log(categories);
 function renderExerciseCategories() {
   exerciseGrid.innerHTML = "";
 
@@ -367,28 +416,52 @@ function renderDetail(index) {
 DrillUp.stopTimer = stopTimer;
 DrillUp.cancelRoutine = cancelRoutine;
 
-function initExercises() {
-  syncExerciseProgress();
-  renderExerciseCategories();
+async function initExercises() {
 
-  backToHome.addEventListener("click", DrillUp.showHome);
-  backToCategory.addEventListener("click", () => renderCategory(currentCategoryKey));
-  firstRoutineButton.addEventListener("click", () => {
-    startRoutine();
-    renderDetail(0);
-  });
-  timerButton.addEventListener("click", startTimer);
-  previousExercise.addEventListener("click", () => {
-    if (currentExerciseIndex > 0) {
-      renderDetail(currentExerciseIndex - 1);
-    }
-  });
-  nextExercise.addEventListener("click", () => {
-    const exercises = categories[currentCategoryKey].exercises;
-    if (currentExerciseIndex < exercises.length - 1) {
-      renderDetail(currentExerciseIndex + 1);
-    }
-  });
+    await loadCategories();
+
+    console.log("PASO 1");
+    console.log(categories);
+
+    console.log("PASO 2");
+
+    renderExerciseCategories();
+
+    console.log("PASO 3");
+
+    syncExerciseProgress();
+
+    renderExerciseCategories();
+
+    backToHome.addEventListener("click", DrillUp.showHome);
+
+    backToCategory.addEventListener("click", () => renderCategory(currentCategoryKey));
+
+    firstRoutineButton.addEventListener("click", () => {
+        startRoutine();
+        renderDetail(0);
+    });
+
+    timerButton.addEventListener("click", startTimer);
+
+    previousExercise.addEventListener("click", () => {
+        if (currentExerciseIndex > 0) {
+            renderDetail(currentExerciseIndex - 1);
+        }
+    });
+
+    nextExercise.addEventListener("click", () => {
+        const exercises = categories[currentCategoryKey].exercises;
+
+        if (currentExerciseIndex < exercises.length - 1) {
+            renderDetail(currentExerciseIndex + 1);
+        }
+    });
+console.log("DATA API:");
+
+
+console.log("OBJETO CATEGORIES:");
+console.log(categories);
 }
 
 initExercises();
