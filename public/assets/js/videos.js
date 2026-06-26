@@ -184,7 +184,7 @@ function showVideoPreview(video) {
 
     title.textContent = video.exercise || video.name;
 
-    player.src = video.video_path;
+    player.src = window.location.origin + video.video_path;
 
     player.controls = true;
 
@@ -472,20 +472,12 @@ function getAnalysisKey() {
   return uid ? `${ANALYSIS_STORAGE_KEY}-${uid}` : null;
 }
 
-function getAnalyses() {
-  const key = getAnalysisKey();
-  if (!key) return [];
-  try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch { return []; }
+async function getAnalyses() {
+    return await getEvaluations();
 }
 
-function saveAnalysis(analysis) {
-  const key = getAnalysisKey();
-  if (!key) return;
-  const all = getAnalyses();
-  const idx = all.findIndex(a => a.videoId === analysis.videoId);
-  if (idx >= 0) all[idx] = analysis;
-  else all.push(analysis);
-  localStorage.setItem(key, JSON.stringify(all));
+function saveAnalysis(result) {
+    return;
 }
 
 /* ── Mock results per category (simulated IA) ── */
@@ -547,188 +539,250 @@ const MOCK_RESULTS_BY_CATEGORY = {
 let _currentVideosForAnalysis = [];
 
 async function renderAnalyzeVideos() {
-  console.log("renderAnalyzeVideos ejecutándose");
 
-  const grid = document.querySelector("#analyzeVideosGrid");
-  const filter = document.querySelector("#analyzeCategoryFilter");
-  if (!grid) return;
+    const grid = document.querySelector("#analyzeVideosGrid");
+    const filter = document.querySelector("#analyzeCategoryFilter");
 
-  _currentVideosForAnalysis = await getVideos();
+    if (!grid) return;
 
-  console.log("VIDEOS:", _currentVideosForAnalysis);
-  console.log("GRID:", grid);
-  console.log("FILTER:", filter?.value);
+    _currentVideosForAnalysis = await getVideos();
 
-  console.log(_currentVideosForAnalysis);
-
-_currentVideosForAnalysis.forEach(v => {
-    console.log("Categoria original:", v.category);
-    console.log("Normalizada:", normalizeCategory(v.category));
-
-    v.category = normalizeCategory(v.category) || v.category;
-});
-  const analyses = getAnalyses();
-
-  
-
-  if (!_currentVideosForAnalysis.length) {
-    grid.innerHTML = `<article class="empty-state-card"><strong>No hay videos para analizar</strong><p>Sube un video de entrenamiento desde Mis Videos para comenzar.</p></article>`;
-    return;
-  }
-
-  const category = filter?.value || "Todas";
-  
-  const filtered = category === "Todas"
-    ? _currentVideosForAnalysis
-    : _currentVideosForAnalysis.filter(v => {
-        const cat = (v.category || "").toLowerCase();
-
-        switch (category) {
-            case "Tiro":
-                return cat.includes("tiro");
-            case "Dribbling":
-                return cat.includes("balón") || cat.includes("dribbling");
-            case "Pases":
-                return cat.includes("pase");
-            case "Pliometría":
-                return cat.includes("pliometr");
-            case "Velocidad":
-                return cat.includes("velocidad");
-            case "Core":
-                return cat.includes("core");
-            case "Movilidad":
-                return cat.includes("movilidad");
-            default:
-                return true;
-        }
+    _currentVideosForAnalysis.forEach(v => {
+        v.category = normalizeCategory(v.category) || v.category;
     });
 
-  if (!filtered.length) {
-    grid.innerHTML = `<article class="empty-state-card"><strong>No hay videos en esta categoría</strong><p>Sube un video de tipo "${category}" para analizarlo.</p></article>`;
-    return;
-  }
+    if (!_currentVideosForAnalysis.length) {
 
-  grid.innerHTML = filtered.map(v => {
-    const existing = analyses.find(a => a.videoId === v.id);
-    const status = existing ? "done" : "pending";
-    return `
-      <div class="analyze-video-card" data-video-id="${v.id}">
-        <div class="analyze-video-info">
-          <strong>${escapeHtml(v.name)}</strong>
-          <small>${formatDateDisplay(v.date)} — ${v.category}</small>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <span class="analyze-status-badge ${status}">${status === "done" ? "Analizado" : "Pendiente"}</span>
-          <button class="primary-action compact-action" type="button" data-action="analyze">${status === "done" ? "Ver resultado" : "Analizar"}</button>
-        </div>
-      </div>
-    `;
-  }).join("");
+        grid.innerHTML = `
+            <article class="empty-state-card">
+                <strong>No hay videos para analizar</strong>
+                <p>Sube un video de entrenamiento desde Mis Videos para comenzar.</p>
+            </article>
+        `;
 
-  grid.querySelectorAll("[data-action='analyze']").forEach(btn => {
-    btn.addEventListener("click", () => {
-
-    console.log("CLICK ANALIZAR");
-
-    const card = btn.closest(".analyze-video-card");
-
-    console.log(card);
-
-    const videoId = card.dataset.videoId;
-
-    console.log("VIDEO ID:", videoId);
-
-    const analyses = getAnalyses();
-
-    const existing = analyses.find(a => a.videoId == videoId);
-
-    console.log("EXISTE:", existing);
-
-    const video = _currentVideosForAnalysis.find(v => v.id == videoId);
-
-    console.log("VIDEO:", video);
-
-    if (existing) {
-        showAnalysisResults(existing);
-    } else {
-        if (video) {
-            console.log("LLAMANDO startAnalysisSimulation");
-            startAnalysisSimulation(video);
-        }
+        return;
     }
-});;
-  });
+
+    const category = filter?.value || "Todas";
+
+    const filtered = category === "Todas"
+        ? _currentVideosForAnalysis
+        : _currentVideosForAnalysis.filter(v => {
+
+            const cat = (v.category || "").toLowerCase();
+
+            switch (category) {
+
+                case "Tiro":
+                    return cat.includes("tiro");
+
+                case "Dribbling":
+                    return cat.includes("balón") || cat.includes("dribbling");
+
+                case "Pases":
+                    return cat.includes("pase");
+
+                case "Pliometría":
+                    return cat.includes("pliometr");
+
+                case "Velocidad":
+                    return cat.includes("velocidad");
+
+                case "Core":
+                    return cat.includes("core");
+
+                case "Movilidad":
+                    return cat.includes("movilidad");
+
+                default:
+                    return true;
+            }
+        });
+
+    if (!filtered.length) {
+
+        grid.innerHTML = `
+            <article class="empty-state-card">
+                <strong>No hay videos en esta categoría</strong>
+                <p>Sube un video de tipo "${category}" para analizarlo.</p>
+            </article>
+        `;
+
+        return;
+    }
+
+    grid.innerHTML = filtered.map(v => {
+
+        const analyzed = v.analysis_status === "completed";
+
+        return `
+            <div class="analyze-video-card" data-video-id="${v.id}">
+                <div class="analyze-video-info">
+                    <strong>${escapeHtml(v.name)}</strong>
+                    <small>${formatDateDisplay(v.date)} — ${v.category}</small>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:10px">
+
+                    <span class="analyze-status-badge ${analyzed ? "done" : "pending"}">
+                        ${analyzed ? "Analizado" : "Pendiente"}
+                    </span>
+
+                    <button
+                        class="primary-action compact-action"
+                        type="button"
+                        data-action="analyze">
+                        ${analyzed ? "Ver resultado" : "Analizar"}
+                    </button>
+
+                </div>
+            </div>
+        `;
+
+    }).join("");
+
+    grid.querySelectorAll("[data-action='analyze']").forEach(btn => {
+
+        btn.addEventListener("click", async () => {
+
+            const videoId = Number(
+                btn.closest(".analyze-video-card").dataset.videoId
+            );
+
+            const video = _currentVideosForAnalysis.find(
+                v => v.id === videoId
+            );
+
+            if (!video) return;
+
+            if (video.analysis_status === "completed") {
+
+                const response = await fetch(
+                    `/api/evaluation-videos/${video.id}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                            Accept: "application/json"
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    alert("No se pudo cargar el análisis.");
+                    return;
+                }
+
+                const analysis = await response.json();
+
+                showAnalysisResults(analysis);
+
+            } else {
+
+                await startAnalysisSimulation(video);
+
+                await renderAnalyzeVideos();
+
+            }
+
+        });
+
+    });
+
 }
 
 /* ── Analysis simulation ── */
 
 async function startAnalysisSimulation(video) {
-  console.log("ENTRÓ A startAnalysisSimulation");
-  const panel = document.querySelector("#analyzeProcessPanel");
-  const results = document.querySelector("#analyzeResultsPanel");
-  const steps = panel.querySelectorAll(".analyze-step");
-  const fill = panel.querySelector(".analyze-progress-fill");
-  const statusText = panel.querySelector(".analyze-status-text");
 
-  results.hidden = true;
-  panel.hidden = false;
+    const panel = document.querySelector("#analyzeProcessPanel");
+    const results = document.querySelector("#analyzeResultsPanel");
+    const steps = panel.querySelectorAll(".analyze-step");
+    const fill = panel.querySelector(".analyze-progress-fill");
+    const statusText = panel.querySelector(".analyze-status-text");
 
-  steps.forEach(s => { s.classList.remove("active", "done"); });
-  fill.style.width = "0%";
-  statusText.textContent = "Analizando video...";
+    results.hidden = true;
+    panel.hidden = false;
 
-  const stepData = [
-    { label: "Detectando cuerpo", pct: 25 },
-    { label: "Detectando movimiento", pct: 50 },
-    { label: "Analizando técnica", pct: 75 },
-    { label: "Generando informe", pct: 100 }
-  ];
+    steps.forEach(s => s.classList.remove("active", "done"));
 
-  stepData.forEach((s, i) => {
-    setTimeout(() => {
-      steps[i].classList.add("active");
-    }, i * 1200);
+    fill.style.width = "0%";
+    statusText.textContent = "Analizando video...";
 
-    setTimeout(() => {
-      steps[i].classList.remove("active");
-      steps[i].classList.add("done");
-      fill.style.width = s.pct + "%";
-      statusText.textContent = s.label + "...";
+    const stepData = [
+        { label: "Detectando cuerpo", pct: 25 },
+        { label: "Detectando movimiento", pct: 50 },
+        { label: "Analizando técnica", pct: 75 },
+        { label: "Generando informe", pct: 100 }
+    ];
 
-      if (i === stepData.length - 1) {
-        setTimeout(async () => {
-          panel.hidden = true;
-          try {
+    stepData.forEach((s, i) => {
 
-    const response = await fetch(
-        `/api/evaluation-videos/${video.id}`,
-        {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-                Accept: "application/json"
-            }
-        }
-    );
+        setTimeout(() => {
+            steps[i].classList.add("active");
+        }, i * 1200);
 
-    if (!response.ok) {
-        throw new Error("No se pudo obtener el análisis.");
-    }
+        setTimeout(() => {
 
-    const result = await response.json();
+            steps[i].classList.remove("active");
+            steps[i].classList.add("done");
 
-    saveAnalysis(result);
+            fill.style.width = s.pct + "%";
+            statusText.textContent = s.label + "...";
 
-    showAnalysisResults(result);
+            if (i === stepData.length - 1) {
 
-} catch (error) {
+                setTimeout(async () => {
+
+                    panel.hidden = true;
+
+                    try {
+
+                        const response = await fetch(
+                            `/api/evaluation-videos/${video.id}`,
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                                    Accept: "application/json"
+                                }
+                            }
+                        );
+
+                        if (!response.ok) {
+
+                          const error = await response.json().catch(async () => ({
+                              message: await response.text()
+                          }));
+
+                          console.log(error);
+
+                          throw new Error(error.message || "Error al subir el video.");
+
+                        }
+
+                        const result = await response.json();
+
+                        showAnalysisResults(result);
+
+                        await renderAnalyzeVideos();
+
+                    } catch (error) {
+
+    console.error(error);
 
     alert(error.message);
 
+    showVideoFeedback(error.message, true);
+
 }
-        }, 600);
-      }
-    }, i * 1200 + 1000);
-  });
+
+                }, 600);
+
+            }
+
+        }, i * 1200 + 1000);
+
+    });
+
 }
 
 function showAnalysisResults(result) {
@@ -766,11 +820,12 @@ function showAnalysisResults(result) {
 
 let aiChartInstance = null;
 
-function renderHistoryTable() {
-  const container = document.querySelector("#aiHistoryTable");
-  if (!container) return;
+async function renderHistoryTable() {
 
-  const analyses = getAnalyses();
+    const container = document.querySelector("#aiHistoryTable");
+    if (!container) return;
+
+    const analyses = await getEvaluations();
 
   if (!analyses.length) {
     container.innerHTML = `<article class="empty-state-card"><strong>Aún no hay análisis guardados</strong><p>Realiza un análisis desde la sección Analizar Videos para ver tu historial aquí.</p></article>`;

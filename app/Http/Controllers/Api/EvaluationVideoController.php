@@ -39,7 +39,7 @@ class EvaluationVideoController extends Controller
                 'exercise' => $video->exercise?->name,
                 'description' => $video->exercise?->description,
                 'notes' => '',
-                'video_path' => asset('storage/' . $video->video_path),
+                'video_path' => Storage::url($video->video_path),
                 'analysis_status' => $video->analysis_status
             ];
         });
@@ -188,80 +188,73 @@ return response()->json([
 }
   public function analyze(Request $request, string $id)
 {
+    $video = EvaluationVideo::with([
+        'evaluation.movementMetric',
+        'exercise.category'
+    ])
+    ->where('user_id', $request->user()->id)
+    ->findOrFail($id);
+
+    if (!$video->evaluation) {
+        return response()->json([
+            'message' => 'Este video aún no ha sido analizado.'
+        ], 404);
+    }
+
+    $metric = $video->evaluation->movementMetric;
+
+    return response()->json([
+        'videoId' => $video->id,
+        'videoName' => basename($video->video_path),
+        'category' => $video->exercise?->category?->name,
+        'date' => optional($video->uploaded_at)->format('Y-m-d'),
+
+        'score' => $video->evaluation->score,
+
+        'metrics' => [
+            'Detección corporal' => $metric?->knee_angle ?? 0,
+            'Seguimiento' => $metric?->elbow_angle ?? 0,
+            'Estabilidad' => $metric?->stability ?? 0,
+            'Precisión' => $metric?->speed ?? 0
+        ],
+
+        'strengths' => [
+            'Análisis realizado correctamente.'
+        ],
+
+        'weaknesses' => [
+            $video->evaluation->observaciones
+        ],
+
+        'exercises' => [
+            'Continúa practicando este ejercicio.'
+        ]
+    ]);
+}
+public function destroy(Request $request, string $id)
+{
     $video = EvaluationVideo::where(
         'user_id',
         $request->user()->id
     )->findOrFail($id);
 
-    $fullPath = storage_path(
-        'app/public/' . $video->video_path
-    );
-
-    $response = $this->ai->analyze(
-        $fullPath,
-        $video->exercise_id
-    );
-
-    if (!$response->successful()) {
-        return response()->json([
-            'message' => 'Error al analizar el video.'
-        ], 500);
+    if (
+        $video->video_path &&
+        Storage::disk('public')->exists($video->video_path)
+    ) {
+        Storage::disk('public')->delete($video->video_path);
     }
 
-    $data = $response->json();
+    if ($video->evaluation) {
+        $video->evaluation->movementMetric()?->delete();
+        $video->evaluation->delete();
+    }
 
-    
-    $evaluation = Evaluations::create([
-        'user_id' => $request->user()->id,
-        'exercise_id' => $video->exercise_id,
-        'score' => $data['score'],
-        'observaciones' => implode("\n", $data['weaknesses']),
-        'evaluated_at' => now()
+    $video->delete();
+
+    return response()->json([
+        'message' => 'Video eliminado correctamente'
     ]);
-
-   
-    MovementMetric::create([
-        'evaluation_id' => $evaluation->id,
-        'knee_angle' => $data['metrics']['Detección corporal'],
-        'elbow_angle' => $data['metrics']['Seguimiento'],
-        'speed' => $data['metrics']['Precisión'],
-        'stability' => $data['metrics']['Estabilidad']
-    ]);
-
-    
-    $video->evaluation_id = $evaluation->id;
-    $video->analysis_status = 'completed';
-    $video->save();
-
-    return response()->json($data);
 }
 
-    public function destroy(Request $request, string $id)
-    {
-        $video = EvaluationVideo::where(
-            'user_id',
-            $request->user()->id
-        )->findOrFail($id);
-
-        try {
-
-            if (
-                $video->video_path &&
-                Storage::disk('public')->exists($video->video_path)
-            ) {
-                Storage::disk('public')->delete($video->video_path);
-            }
-
-        } catch (\Throwable $e) {
-
-            Log::warning($e->getMessage());
-
-        }
-
-        $video->delete();
-
-        return response()->json([
-            'message' => 'Video eliminado correctamente'
-        ]);
-    }
 }

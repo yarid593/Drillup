@@ -19,10 +19,11 @@ class EvaluationController extends Controller
         )->get();
     }
 
-    return Evaluations::with(
-        'user',
-        'exercise'
-    )
+    return Evaluations::with([
+    'user',
+    'exercise',
+    'video'
+])
     ->where(
         'user_id',
         $request->user()->id

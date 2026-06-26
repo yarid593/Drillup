@@ -78,5 +78,10 @@ const API = {
         });
 
     }
+    
 
 };
+
+async function getEvaluations() {
+    return API.get("/evaluations");
+}
