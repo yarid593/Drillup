@@ -20,6 +20,8 @@
 
             <li><a href="{{ url('/signals') }}">Señales</a></li>
 
+            
+
         </ul>
 
     </nav>

@@ -56,7 +56,23 @@ async function saveVideo(video) {
 }
 
 async function deleteVideo(id) {
-  await withVideoStore("readwrite", (store) => store.delete(id));
+
+    const response = await fetch(`/api/evaluation-videos/${id}`, {
+
+        method: "DELETE",
+
+        headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Accept: "application/json"
+        }
+
+    });
+
+    if (!response.ok) {
+        throw new Error("No se pudo eliminar el video.");
+    }
+    
+
 }
 
 function videoEmptyMarkup() {
@@ -72,8 +88,14 @@ async function renderVideos() {
   const list = document.querySelector("#videosList");
   if (!list || !window.indexedDB) return;
 
-  const videos = await getVideos();
-  videos.forEach(v => { if (v.category) v.category = normalizeCategory(v.category) || v.category; });
+  const response = await fetch("/api/evaluation-videos", {
+    headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Accept: "application/json"
+    }
+});
+
+const videos = await response.json();
 
   if (!videos.length) {
     list.innerHTML = videoEmptyMarkup();
@@ -109,10 +131,21 @@ async function renderVideos() {
 
   list.querySelectorAll("[data-action='view']").forEach((button) => {
     button.addEventListener("click", () => {
-      const id = button.closest(".video-card").dataset.videoId;
-      const all = Object.values(groups).flat();
-      showVideoPreview(all.find(v => v.id === id));
-    });
+
+    const id = Number(button.closest(".video-card").dataset.videoId);
+
+    const all = Object.values(groups).flat();
+
+    console.log("ID:", id);
+    console.log("VIDEOS:", all);
+
+    const video = all.find(v => Number(v.id) === id);
+
+    console.log("VIDEO ENCONTRADO:", video);
+
+    showVideoPreview(video);
+
+});
   });
 
   list.querySelectorAll("[data-action='delete']").forEach((button) => {
@@ -125,22 +158,43 @@ async function renderVideos() {
 }
 
 function showVideoPreview(video) {
-  if (!video) return;
 
-  const panel = document.querySelector("#videoPreviewPanel");
-  const player = document.querySelector("#videoPreviewPlayer");
-  const title = document.querySelector("#videoPreviewTitle");
+    if (!video) return;
 
-  if (panel) panel.hidden = false;
-  if (title) title.textContent = video.name;
-  if (player) {
-    if (player.dataset.url) URL.revokeObjectURL(player.dataset.url);
-    const url = URL.createObjectURL(video.file);
-    player.src = url;
-    player.dataset.url = url;
-  }
+    const panel = document.querySelector("#videoPreviewPanel");
+    const player = document.querySelector("#videoPreviewPlayer");
+    const title = document.querySelector("#videoPreviewTitle");
+
+    console.log(player);
+    console.log(video.video_path);
+
+    panel.hidden = false;
+
+    title.textContent = video.exercise || video.name;
+
+    player.src = video.video_path;
+
+    player.controls = true;
+
+    player.load();
+
+    player.play().catch(console.error);
 }
+function closeVideoPreview() {
 
+    const panel = document.querySelector("#videoPreviewPanel");
+    const player = document.querySelector("#videoPreviewPlayer");
+
+    if (player) {
+        player.pause();
+        player.removeAttribute("src");
+        player.load();
+    }
+
+    if (panel) {
+        panel.hidden = true;
+    }
+}
 /* ── View switching ── */
 
 function showVideosMain() {

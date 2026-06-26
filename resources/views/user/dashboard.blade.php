@@ -48,13 +48,16 @@
       </div>
 
       <nav class="nav-list" aria-label="Navegación principal">
-        <a href="#ejercicios"><span class="nav-icon">🏀</span>Ejercicios</a>
-        <a href="#jugadas"><span class="nav-icon">📋</span>Jugadas</a>
-        <a href="#senales"><span class="nav-icon">🚩</span>Señalizaciones arbitrales</a>
-        <a href="#videos"><span class="nav-icon">🎬</span>Mis Videos</a>
-        <a href="#usuario"><span class="nav-icon">👤</span>Usuario</a>
-        <div id="adminLinkContainer"></div>
-      </nav>
+    <a href="#ejercicios"><span class="nav-icon">🏀</span>Ejercicios</a>
+    <a href="#jugadas"><span class="nav-icon">📋</span>Jugadas</a>
+    <a href="#senales"><span class="nav-icon">🚩</span>Señalizaciones arbitrales</a>
+
+    <a href="#historia"><span class="nav-icon">📚</span>Historia del baloncesto</a>
+
+    <a href="#videos"><span class="nav-icon">🎬</span>Mis Videos</a>
+    <a href="#usuario"><span class="nav-icon">👤</span>Usuario</a>
+    <div id="adminLinkContainer"></div>
+</nav>
 
       <div class="theme-control">
         <span>Modo de pantalla</span>
@@ -163,6 +166,7 @@
       </section>
 
       <section class="content-view view" id="contentView" aria-live="polite">
+
         <div id="historyContent" class="history-content" hidden>
           <section class="history-hero">
             <div class="history-copy">
@@ -562,6 +566,29 @@
               <h3>Mis videos</h3>
             </div>
             <div id="videosList" aria-live="polite"></div>
+            <div id="videoPreviewPanel" class="video-preview-panel" hidden>
+
+    <div class="dashboard-title-row">
+        <h3 id="videoPreviewTitle">Vista previa</h3>
+
+        <button
+            style="text-align: center;"
+            type="button"
+            class="secondary-action compact-action"
+            onclick="closeVideoPreview()">
+            Cerrar
+      </button>
+    </div>
+
+    <video
+        id="videoPreviewPlayer"
+        controls
+        playsinline
+        width="100%">
+        
+    </video>
+
+</div>
           </section>
         </div>
 
