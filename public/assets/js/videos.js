@@ -216,13 +216,22 @@ function showVideosMain() {
 }
 
 async function showAnalyzeAI() {
+
   document.querySelector("#videosContent").hidden = true;
   document.querySelector("#analyzeAIContent").hidden = false;
   document.querySelector("#aiHistoryContent").hidden = true;
+
   const processPanel = document.querySelector("#analyzeProcessPanel");
   const resultsPanel = document.querySelector("#analyzeResultsPanel");
+
   if (processPanel) processPanel.hidden = true;
   if (resultsPanel) resultsPanel.hidden = true;
+
+  // <-- AGREGA ESTO
+  const filter = document.querySelector("#analyzeCategoryFilter");
+  filter.value = "Todas";
+
+  // <-- Y LUEGO ESTO
   await renderAnalyzeVideos();
 }
 
@@ -545,8 +554,19 @@ async function renderAnalyzeVideos() {
   if (!grid) return;
 
   _currentVideosForAnalysis = await getVideos();
+
+  console.log("VIDEOS:", _currentVideosForAnalysis);
+  console.log("GRID:", grid);
+  console.log("FILTER:", filter?.value);
+
   console.log(_currentVideosForAnalysis);
-  _currentVideosForAnalysis.forEach(v => { v.category = normalizeCategory(v.category) || v.category; });
+
+_currentVideosForAnalysis.forEach(v => {
+    console.log("Categoria original:", v.category);
+    console.log("Normalizada:", normalizeCategory(v.category));
+
+    v.category = normalizeCategory(v.category) || v.category;
+});
   const analyses = getAnalyses();
 
   
@@ -560,12 +580,28 @@ async function renderAnalyzeVideos() {
   
   const filtered = category === "Todas"
     ? _currentVideosForAnalysis
-    : _currentVideosForAnalysis.filter(v => v.category === category);
-    console.log("VIDEOS:", _currentVideosForAnalysis);
+    : _currentVideosForAnalysis.filter(v => {
+        const cat = (v.category || "").toLowerCase();
 
-  console.log("FILTRO:", category);
-
-  console.log("FILTRADOS:", filtered);
+        switch (category) {
+            case "Tiro":
+                return cat.includes("tiro");
+            case "Dribbling":
+                return cat.includes("balón") || cat.includes("dribbling");
+            case "Pases":
+                return cat.includes("pase");
+            case "Pliometría":
+                return cat.includes("pliometr");
+            case "Velocidad":
+                return cat.includes("velocidad");
+            case "Core":
+                return cat.includes("core");
+            case "Movilidad":
+                return cat.includes("movilidad");
+            default:
+                return true;
+        }
+    });
 
   if (!filtered.length) {
     grid.innerHTML = `<article class="empty-state-card"><strong>No hay videos en esta categoría</strong><p>Sube un video de tipo "${category}" para analizarlo.</p></article>`;
@@ -591,23 +627,43 @@ async function renderAnalyzeVideos() {
 
   grid.querySelectorAll("[data-action='analyze']").forEach(btn => {
     btn.addEventListener("click", () => {
-      const card = btn.closest(".analyze-video-card");
-      const videoId = card.dataset.videoId;
-      const analyses = getAnalyses();
-      const existing = analyses.find(a => a.videoId === videoId);
-      if (existing) {
+
+    console.log("CLICK ANALIZAR");
+
+    const card = btn.closest(".analyze-video-card");
+
+    console.log(card);
+
+    const videoId = card.dataset.videoId;
+
+    console.log("VIDEO ID:", videoId);
+
+    const analyses = getAnalyses();
+
+    const existing = analyses.find(a => a.videoId == videoId);
+
+    console.log("EXISTE:", existing);
+
+    const video = _currentVideosForAnalysis.find(v => v.id == videoId);
+
+    console.log("VIDEO:", video);
+
+    if (existing) {
         showAnalysisResults(existing);
-      } else {
-        const video = _currentVideosForAnalysis.find(v => v.id === videoId);
-        if (video) startAnalysisSimulation(video);
-      }
-    });
+    } else {
+        if (video) {
+            console.log("LLAMANDO startAnalysisSimulation");
+            startAnalysisSimulation(video);
+        }
+    }
+});;
   });
 }
 
 /* ── Analysis simulation ── */
 
 async function startAnalysisSimulation(video) {
+  console.log("ENTRÓ A startAnalysisSimulation");
   const panel = document.querySelector("#analyzeProcessPanel");
   const results = document.querySelector("#analyzeResultsPanel");
   const steps = panel.querySelectorAll(".analyze-step");

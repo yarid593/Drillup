@@ -186,7 +186,7 @@ return response()->json([
         ]
     ]);
 }
-    public function analyze(Request $request, string $id)
+  public function analyze(Request $request, string $id)
 {
     $video = EvaluationVideo::where(
         'user_id',
@@ -208,10 +208,32 @@ return response()->json([
         ], 500);
     }
 
+    $data = $response->json();
+
+    
+    $evaluation = Evaluations::create([
+        'user_id' => $request->user()->id,
+        'exercise_id' => $video->exercise_id,
+        'score' => $data['score'],
+        'observaciones' => implode("\n", $data['weaknesses']),
+        'evaluated_at' => now()
+    ]);
+
+   
+    MovementMetric::create([
+        'evaluation_id' => $evaluation->id,
+        'knee_angle' => $data['metrics']['Detección corporal'],
+        'elbow_angle' => $data['metrics']['Seguimiento'],
+        'speed' => $data['metrics']['Precisión'],
+        'stability' => $data['metrics']['Estabilidad']
+    ]);
+
+    
+    $video->evaluation_id = $evaluation->id;
     $video->analysis_status = 'completed';
     $video->save();
 
-    return response()->json($response->json());
+    return response()->json($data);
 }
 
     public function destroy(Request $request, string $id)
