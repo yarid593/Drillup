@@ -44,11 +44,23 @@ async function withVideoStore(mode, callback) {
 }
 
 async function getVideos() {
-  return withVideoStore("readonly", (store) => new Promise((resolve, reject) => {
-    const request = store.getAll();
-    request.onsuccess = () => resolve(request.result.sort((a, b) => b.createdAt - a.createdAt));
-    request.onerror = () => reject(request.error);
-  }));
+
+    try {
+
+        const videos = await API.get("/evaluation-videos");
+
+        console.log("VIDEOS API:", videos);
+
+        return videos;
+
+    } catch (error) {
+
+        console.error(error);
+
+        return [];
+
+    }
+
 }
 
 async function saveVideo(video) {
@@ -526,13 +538,18 @@ const MOCK_RESULTS_BY_CATEGORY = {
 let _currentVideosForAnalysis = [];
 
 async function renderAnalyzeVideos() {
+  console.log("renderAnalyzeVideos ejecutándose");
+
   const grid = document.querySelector("#analyzeVideosGrid");
   const filter = document.querySelector("#analyzeCategoryFilter");
   if (!grid) return;
 
   _currentVideosForAnalysis = await getVideos();
+  console.log(_currentVideosForAnalysis);
   _currentVideosForAnalysis.forEach(v => { v.category = normalizeCategory(v.category) || v.category; });
   const analyses = getAnalyses();
+
+  
 
   if (!_currentVideosForAnalysis.length) {
     grid.innerHTML = `<article class="empty-state-card"><strong>No hay videos para analizar</strong><p>Sube un video de entrenamiento desde Mis Videos para comenzar.</p></article>`;
@@ -540,9 +557,15 @@ async function renderAnalyzeVideos() {
   }
 
   const category = filter?.value || "Todas";
+  
   const filtered = category === "Todas"
     ? _currentVideosForAnalysis
     : _currentVideosForAnalysis.filter(v => v.category === category);
+    console.log("VIDEOS:", _currentVideosForAnalysis);
+
+  console.log("FILTRO:", category);
+
+  console.log("FILTRADOS:", filtered);
 
   if (!filtered.length) {
     grid.innerHTML = `<article class="empty-state-card"><strong>No hay videos en esta categoría</strong><p>Sube un video de tipo "${category}" para analizarlo.</p></article>`;
@@ -584,7 +607,7 @@ async function renderAnalyzeVideos() {
 
 /* ── Analysis simulation ── */
 
-function startAnalysisSimulation(video) {
+async function startAnalysisSimulation(video) {
   const panel = document.querySelector("#analyzeProcessPanel");
   const results = document.querySelector("#analyzeResultsPanel");
   const steps = panel.querySelectorAll(".analyze-step");
@@ -617,23 +640,35 @@ function startAnalysisSimulation(video) {
       statusText.textContent = s.label + "...";
 
       if (i === stepData.length - 1) {
-        setTimeout(() => {
+        setTimeout(async () => {
           panel.hidden = true;
-          const cat = normalizeCategory(video.category) || video.category;
-          const mock = MOCK_RESULTS_BY_CATEGORY[cat] || MOCK_RESULTS_BY_CATEGORY.Dribbling;
-          const result = {
-            videoId: video.id,
-            videoName: video.name,
-            category: video.category,
-            date: new Date().toISOString().split("T")[0],
-            score: mock.score,
-            metrics: { ...mock.metrics },
-            strengths: [...mock.strengths],
-            weaknesses: [...mock.weaknesses],
-            exercises: [...mock.exercises]
-          };
-          saveAnalysis(result);
-          showAnalysisResults(result);
+          try {
+
+    const response = await fetch(
+        `/api/evaluation-videos/${video.id}`,
+        {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+                Accept: "application/json"
+            }
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("No se pudo obtener el análisis.");
+    }
+
+    const result = await response.json();
+
+    saveAnalysis(result);
+
+    showAnalysisResults(result);
+
+} catch (error) {
+
+    alert(error.message);
+
+}
         }, 600);
       }
     }, i * 1200 + 1000);

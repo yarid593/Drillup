@@ -689,8 +689,10 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
 <script src="{{ asset('assets/js/auth.js') }}" defer></script>
 <script src="{{ asset('assets/js/page-protect.js') }}" defer></script>
+<script src="{{ asset('assets/js/api.js') }}" defer></script>
 <script src="{{ asset('assets/js/app.js') }}" defer></script>
 <script src="{{ asset('assets/js/exercises.js') }}" defer></script>
 <script src="{{ asset('assets/js/signals.js') }}" defer></script>

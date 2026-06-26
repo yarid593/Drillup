@@ -129,7 +129,6 @@ class EvaluationController extends Controller
 
     return response()->json($evaluation);
 }
-
    public function destroy(string $id)
 {
     return response()->json([

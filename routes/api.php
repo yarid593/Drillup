@@ -76,6 +76,10 @@ Route::middleware('auth:sanctum')->group(function () {
    
     Route::get('/statistics', [StatisticController::class, 'index']);
     
+    Route::post(
+    '/evaluation-videos/{id}/analyze',
+    [EvaluationVideoController::class, 'analyze']
+)->middleware('auth:sanctum');
 
     
     Route::get('/streaks', [StreakController::class, 'index']);
