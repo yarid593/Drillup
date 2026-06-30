@@ -12,6 +12,7 @@ use App\Models\Evaluations;
 use App\Models\MovementMetric;
 use App\Models\Statistics;
 
+
 class EvaluationVideoController extends Controller
 {
 
@@ -32,21 +33,24 @@ class EvaluationVideoController extends Controller
         ->map(function ($video) {
 
             return [
-                'id' => $video->id,
-                'name' => basename($video->video_path),
-                'date' => optional($video->uploaded_at)->format('Y-m-d'),
-                'category' => $video->exercise?->category?->name,
-                'exercise' => $video->exercise?->name,
-                'description' => $video->exercise?->description,
-                'notes' => '',
-                'video_path' => Storage::url($video->video_path),
-                'analysis_status' => $video->analysis_status
-            ];
+    'id' => $video->id,
+    'evaluation_id' => $video->evaluation_id,
+    'name' => basename($video->video_path),
+    'date' => optional($video->uploaded_at)->format('Y-m-d'),
+    'category' => $video->exercise?->category?->name,
+    'exercise' => $video->exercise?->name,
+    'description' => $video->exercise?->description,
+    'notes' => '',
+    'video_path' => Storage::url($video->video_path),
+    'analysis_status' => $video->analysis_status
+];
         });
     }
 
     public function store(Request $request)
-    {
+{
+    try {
+
         $request->validate([
             'video' => 'required|file|mimes:mp4,mov,avi,webm|max:51200',
             'exercise_id' => 'required|exists:exercises,id'
@@ -66,77 +70,22 @@ class EvaluationVideoController extends Controller
             'analysis_status' => 'pending'
         ]);
 
-        $fullPath = storage_path(
-    'app/public/' . $video->video_path
-      );
-
-      $response = $this->ai->analyze(
-    $fullPath,
-    $request->exercise_id
-);
-
-if (! $response->successful()) {
-
-    $video->analysis_status = 'failed';
-    $video->save();
-
-    return response()->json([
-        'message' => 'Error analizando el video',
-        'error' => $response->json()
-    ], 500);
-}
-
-$data = $response->json();
-
-$video->analysis_status = 'completed';
-$video->save();
-
-$evaluation = Evaluations::create([
-    'user_id' => $request->user()->id,
-    'exercise_id' => $request->exercise_id,
-    'score' => $data['score'],
-    'observaciones' => implode("\n", $data['weaknesses']),
-    'evaluated_at' => now()
-]);
-
-$video->evaluation_id = $evaluation->id;
-$video->save();
-
-MovementMetric::create([
-    'evaluation_id' => $evaluation->id,
-    'knee_angle' => $data['metrics']['Detección corporal'],
-    'elbow_angle' => $data['metrics']['Seguimiento'],
-    'speed' => $data['metrics']['Precisión'],
-    'stability' => $data['metrics']['Estabilidad']
-]);
-
-$statistic = Statistics::firstOrCreate(
-    ['user_id' => $request->user()->id],
-    [
-        'completed_evaluations' => 0,
-        'average_score' => 0
-    ]
-);
-
-$statistic->completed_evaluations++;
-
-$statistic->average_score = round(
-    Evaluations::where(
-        'user_id',
-        $request->user()->id
-    )->avg('score'),
-    2
-);
-
-$statistic->save();
+        
 
 return response()->json([
-    'video' => $video,
-    'evaluation' => $evaluation,
-    'metrics' => $data['metrics']
+    'video' => $video
 ], 201);
-        
+
+    } catch (\Throwable $e) {
+
+        return response()->json([
+            'message' => $e->getMessage(),
+            'line' => $e->getLine(),
+            'file' => basename($e->getFile())
+        ],500);
+
     }
+}
 
     public function show(Request $request, string $id)
 {
@@ -195,40 +144,90 @@ return response()->json([
     ->where('user_id', $request->user()->id)
     ->findOrFail($id);
 
-    if (!$video->evaluation) {
-        return response()->json([
-            'message' => 'Este video aún no ha sido analizado.'
-        ], 404);
-    }
+    
+    $response = $this->ai->analyze(
+    storage_path('app/public/'.$video->video_path),
+    $video->exercise_id
+);
 
-    $metric = $video->evaluation->movementMetric;
+
+        Log::info("RESPUESTA FASTAPI");
+        Log::info($response->body());
+
+        $data = $response->json();
+
+        Log::info($data);
+
+        if (!$response->successful()) {
+            throw new \Exception($response->body());
+        }
+
+        $data = $response->json();
+
+        $evaluation = Evaluations::create([
+            'user_id' => $request->user()->id,
+            'exercise_id' => $video->exercise_id,
+            'score' => $data['score'],
+            'observaciones' => implode("\n", $data['weaknesses']),
+            'evaluated_at' => now()
+        ]);
+        Log::info("EVALUACION CREADA");
+
+        MovementMetric::create([
+            'evaluation_id' => $evaluation->id,
+            'knee_angle' => $data['metrics']['Detección corporal'],
+            'elbow_angle' => $data['metrics']['Seguimiento'],
+            'speed' => $data['metrics']['Precisión'],
+            'stability' => $data['metrics']['Estabilidad']
+        ]);
+        Log::info("METRICAS CREADAS");
+
+        $video->evaluation_id = $evaluation->id;
+        $video->analysis_status = 'completed';
+        $video->save();
+       $video->load('evaluation.movementMetric');
+
+        $metric = $video->evaluation->movementMetric;
+        
+        $statistic = Statistics::firstOrCreate(
+    ['user_id' => $request->user()->id],
+    [
+        'completed_exercises' => 0,
+        'training_time_minutes' => 0,
+        'total_points' => 0,
+        'completed_evaluations' => 0,
+        'average_score' => 0
+    ]
+);
+
+        $statistic->completed_evaluations++;
+
+        $statistic->average_score = round(
+            Evaluations::where(
+                'user_id',
+                $request->user()->id
+            )->avg('score'),
+            2
+        );
+
+        $statistic->save();
+       Log::info("ANTES DEL RETURN");
 
     return response()->json([
         'videoId' => $video->id,
-        'videoName' => basename($video->video_path),
-        'category' => $video->exercise?->category?->name,
-        'date' => optional($video->uploaded_at)->format('Y-m-d'),
+    'videoName' => basename($video->video_path),
+    'category' => $video->exercise?->category?->name,
+    'date' => optional($video->uploaded_at)->format('Y-m-d'),
 
-        'score' => $video->evaluation->score,
+    'score' => $evaluation->score,
 
-        'metrics' => [
-            'Detección corporal' => $metric?->knee_angle ?? 0,
-            'Seguimiento' => $metric?->elbow_angle ?? 0,
-            'Estabilidad' => $metric?->stability ?? 0,
-            'Precisión' => $metric?->speed ?? 0
-        ],
+    'metrics' => $data['metrics'],
 
-        'strengths' => [
-            'Análisis realizado correctamente.'
-        ],
+    'strengths' => $data['strengths'],
 
-        'weaknesses' => [
-            $video->evaluation->observaciones
-        ],
+    'weaknesses' => $data['weaknesses'],
 
-        'exercises' => [
-            'Continúa practicando este ejercicio.'
-        ]
+    'exercises' => $data['exercises']
     ]);
 }
 public function destroy(Request $request, string $id)

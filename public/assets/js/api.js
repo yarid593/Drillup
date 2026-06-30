@@ -83,5 +83,10 @@ const API = {
 };
 
 async function getEvaluations() {
-    return API.get("/evaluations");
+
+    const data = await API.get("/evaluations");
+
+    console.log("EVALUACIONES:", data);
+
+    return data;
 }

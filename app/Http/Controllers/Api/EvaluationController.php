@@ -11,24 +11,20 @@ class EvaluationController extends Controller
 {
     public function index(Request $request)
 {
-    if ($request->user()->role === 'admin') {
+    $query = Evaluations::with([
+        'user',
+        'exercise.category',
+        'movementMetric',
+        'video'
+    ]);
 
-        return Evaluations::with(
-            'user',
-            'exercise'
-        )->get();
+    if ($request->user()->role !== 'admin') {
+        $query->where('user_id', $request->user()->id);
     }
 
-    return Evaluations::with([
-    'user',
-    'exercise',
-    'video'
-])
-    ->where(
-        'user_id',
-        $request->user()->id
-    )
-    ->get();
+    return $query
+       ->orderBy('evaluated_at')
+      ->get();
 }
     public function store(Request $request)
 {

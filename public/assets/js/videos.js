@@ -215,32 +215,34 @@ function showVideosMain() {
   document.querySelector("#aiHistoryContent").hidden = true;
 }
 
-async function showAnalyzeAI() {
+  async function showAnalyzeAI() {
 
-  document.querySelector("#videosContent").hidden = true;
-  document.querySelector("#analyzeAIContent").hidden = false;
-  document.querySelector("#aiHistoryContent").hidden = true;
+    document.querySelector("#videosContent").hidden = true;
+    document.querySelector("#analyzeAIContent").hidden = false;
+    document.querySelector("#aiHistoryContent").hidden = true;
 
-  const processPanel = document.querySelector("#analyzeProcessPanel");
-  const resultsPanel = document.querySelector("#analyzeResultsPanel");
+    const processPanel = document.querySelector("#analyzeProcessPanel");
+    const resultsPanel = document.querySelector("#analyzeResultsPanel");
 
-  if (processPanel) processPanel.hidden = true;
-  if (resultsPanel) resultsPanel.hidden = true;
+    if (processPanel) processPanel.hidden = true;
+    if (resultsPanel) resultsPanel.hidden = true;
 
-  // <-- AGREGA ESTO
-  const filter = document.querySelector("#analyzeCategoryFilter");
-  filter.value = "Todas";
+    // <-- AGREGA ESTO
+    const filter = document.querySelector("#analyzeCategoryFilter");
+    filter.value = "Todas";
 
-  // <-- Y LUEGO ESTO
-  await renderAnalyzeVideos();
-}
+    // <-- Y LUEGO ESTO
+    console.log(document.querySelector("#analyzeAIContent"));
+    console.log(document.querySelector("#analyzeVideosGrid"));
+    await renderAnalyzeVideos();
+  }
 
-function showAIHistory() {
+async function showAIHistory() {
   document.querySelector("#videosContent").hidden = true;
   document.querySelector("#analyzeAIContent").hidden = true;
   document.querySelector("#aiHistoryContent").hidden = false;
-  renderHistoryTable();
-  initAIChart();
+  await renderHistoryTable();
+  await initAIChart();
 }
 
 /* ── Main videos view ── */
@@ -402,25 +404,27 @@ function initVideoUpload() {
     const token = localStorage.getItem("auth_token");
 
     const response = await fetch("/api/evaluation-videos", {
+    method: "POST",
+    headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json"
+    },
+    body: formData
+});
 
-        method: "POST",
+      const result = await response.json();
 
-        headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json"
-        },
+      console.log("STATUS:", response.status);
+      console.log("RESPUESTA:", result);
 
-        body: formData
+      if (!response.ok) {
+          throw new Error(result.message || "Error al subir el video.");
+      }
 
-    });
+      showVideoFeedback("Video subido correctamente");
 
-    if (!response.ok) {
-        throw new Error("Error al subir el video.");
-    }
-
-    showVideoFeedback("Video subido correctamente");
-
-    await renderVideos();
+      await renderVideos();
+      await renderAnalyzeVideos();
 
 } catch (error) {
 
@@ -736,16 +740,23 @@ async function startAnalysisSimulation(video) {
                     panel.hidden = true;
 
                     try {
+                        panel.hidden = false;
+                        results.hidden = true;
+
+                        statusText.textContent = "Analizando video con IA...";
+                        fill.style.width = "100%";
 
                         const response = await fetch(
-                            `/api/evaluation-videos/${video.id}`,
+                            `/api/evaluation-videos/${video.id}/analyze`,
                             {
+                                method: "POST",
                                 headers: {
                                     Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
                                     Accept: "application/json"
                                 }
                             }
                         );
+                        panel.hidden = true;
 
                         if (!response.ok) {
 
@@ -763,7 +774,13 @@ async function startAnalysisSimulation(video) {
 
                         showAnalysisResults(result);
 
+                        await renderVideos();
+
                         await renderAnalyzeVideos();
+
+                        await renderHistoryTable();
+
+                        await initAIChart();
 
                     } catch (error) {
 
@@ -827,105 +844,227 @@ async function renderHistoryTable() {
 
     const analyses = await getEvaluations();
 
-  if (!analyses.length) {
-    container.innerHTML = `<article class="empty-state-card"><strong>Aún no hay análisis guardados</strong><p>Realiza un análisis desde la sección Analizar Videos para ver tu historial aquí.</p></article>`;
-    return;
-  }
+    if (!analyses.length) {
+        container.innerHTML = `
+            <article class="empty-state-card">
+                <strong>Aún no hay análisis guardados</strong>
+                <p>Realiza un análisis desde la sección Analizar IA para ver tu historial.</p>
+            </article>
+        `;
+        return;
+    }
 
-  container.innerHTML = analyses
-    .sort((a, b) => b.date.localeCompare(a.date) || a.videoName.localeCompare(b.videoName))
-    .map(a => `
-      <article class="history-entry">
-        <span class="entry-date">${formatDateDisplay(a.date)}</span>
-        <span class="entry-category">${escapeHtml(a.category)}</span>
-        <span class="entry-name">${escapeHtml(a.videoName)}</span>
-        <span class="entry-score">${a.score.toFixed(1)}</span>
-      </article>
+    analyses.sort((a, b) =>
+        new Date(b.evaluated_at) - new Date(a.evaluated_at)
+    );
+
+    container.innerHTML = analyses.map(a => `
+        <article class="history-entry">
+
+            <span class="entry-date">
+          ${new Date(a.evaluated_at).toLocaleString("es-CO")}
+            </span>
+
+            <span class="entry-category">
+                ${escapeHtml(a.exercise?.category?.name || "-")}
+            </span>
+
+            <span class="entry-name">
+                ${escapeHtml(a.exercise?.name || "-")}
+            </span>
+
+            <span class="entry-score">
+                ${Number(a.score).toFixed(1)}
+            </span>
+
+        </article>
     `).join("");
 }
 
-function initAIChart() {
-  const canvas = document.querySelector("#aiEvolutionChart");
-  const container = canvas?.parentElement;
-  if (!canvas || !window.Chart) return;
+async function initAIChart() {
 
-  const analyses = getAnalyses();
+    const canvas = document.querySelector("#aiEvolutionChart");
+    const container = canvas?.parentElement;
 
-  if (aiChartInstance) {
-    aiChartInstance.destroy();
-    aiChartInstance = null;
-  }
+    if (!canvas || !window.Chart) return;
 
-  if (!analyses.length) {
-    canvas.hidden = true;
-    const empty = container.querySelector(".chart-empty-state") || (() => {
-      const d = document.createElement("div");
-      d.className = "chart-empty-state";
-      d.textContent = "Gráfico de evolución — datos disponibles tras realizar análisis";
-      container.appendChild(d);
-      return d;
-    })();
-    empty.hidden = false;
-    return;
-  }
+    const analyses = await getEvaluations();
 
-  canvas.hidden = false;
-  const empty = container.querySelector(".chart-empty-state");
-  if (empty) empty.hidden = true;
-
-  const sorted = [...analyses].sort((a, b) => a.date.localeCompare(b.date));
-  const labels = sorted.map(a => {
-    const parts = a.date.split("-");
-    return parts.length === 3 ? `${parts[2]}/${parts[1]}` : a.date;
-  });
-  const data = sorted.map(a => a.score);
-
-  const ctx = canvas.getContext("2d");
-
-  Chart.defaults.color = "#94a3b8";
-  Chart.defaults.borderColor = "rgba(148,163,184,0.15)";
-
-  aiChartInstance = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Puntuación",
-        data,
-        borderColor: "#22c55e",
-        backgroundColor: "rgba(34,197,94,0.1)",
-        fill: true,
-        tension: 0.3,
-        pointBackgroundColor: "#22c55e",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        pointRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        y: {
-          min: 0,
-          max: 10,
-          ticks: { stepSize: 2 }
-        }
-      }
+    if (aiChartInstance) {
+        aiChartInstance.destroy();
+        aiChartInstance = null;
     }
-  });
+
+    if (!analyses.length) {
+
+        canvas.hidden = true;
+
+        const empty = container.querySelector(".chart-empty-state") || (() => {
+
+            const d = document.createElement("div");
+
+            d.className = "chart-empty-state";
+            d.textContent = "Gráfico de evolución — datos disponibles tras realizar análisis";
+
+            container.appendChild(d);
+
+            return d;
+
+        })();
+
+        empty.hidden = false;
+
+        return;
+    }
+
+    canvas.hidden = false;
+
+    const empty = container.querySelector(".chart-empty-state");
+
+    if (empty) empty.hidden = true;
+    console.log("Evaluaciones:", analyses);
+    const sorted = [...analyses];
+
+console.log("SORTED", sorted);
+
+const labels = sorted.map(a =>
+    a.exercise?.name ?? "Ejercicio"
+);
+
+const data = sorted.map(a => parseFloat(a.score));
+
+console.log("LABELS", labels);
+console.log("DATA", data); 
+console.log(canvas);
+console.log(canvas.getContext("2d"));
+
+    const ctx = canvas.getContext("2d");
+
+    Chart.defaults.color = "#94a3b8";
+    Chart.defaults.borderColor = "rgba(148,163,184,0.15)";
+    console.log(labels);
+    console.log(data);
+    try {
+    console.log(window.Chart);
+    console.log(labels);
+    console.log(data);
+    aiChartInstance = new Chart(ctx, {
+
+    type: "line",
+
+    data: {
+
+        labels,
+
+        datasets: [{
+
+            label: "Puntuación",
+
+            data,
+
+            borderColor: "#22c55e",
+
+            backgroundColor: "rgba(34,197,94,0.15)",
+
+            fill: true,
+
+            tension: 0.35,
+
+            pointBackgroundColor: "#22c55e",
+
+            pointBorderColor: "#ffffff",
+
+            pointBorderWidth: 2,
+
+            pointRadius: 5
+
+        }]
+
+    },
+
+    options: {
+
+        responsive: true,
+
+        maintainAspectRatio: false,
+
+        plugins: {
+
+            legend: {
+
+                display: false
+
+            },
+
+            tooltip: {
+
+                callbacks: {
+
+                    title: function (context) {
+
+                        return labels[context[0].dataIndex];
+
+                    },
+
+                    label: function (context) {
+
+                        return `Puntuación: ${context.raw}/10`;
+
+                    }
+
+                }
+
+            }
+
+        },
+
+        scales: {
+
+            y: {
+
+                min: 1,
+
+                max: 10,
+
+                ticks: {
+
+                    stepSize: 1
+
+                }
+
+            }
+
+        }
+
+    }
+
+});
+
+} catch (e) {
+
+    console.error("ERROR CHART", e);
+
+}
+
 }
 
 /* ── Init ── */
 
 async function initVideosModule() {
 
-    await loadCategories();
+    console.log("1. Inició initVideosModule");
 
-    await renderVideos(); 
+    await loadCategories();
+    console.log("2. loadCategories OK");
+
+    await renderVideos();
+    console.log("3. renderVideos OK");
+
+    await renderAnalyzeVideos();
+    console.log("4. renderAnalyzeVideos OK");
+
+    initVideoUpload();
+    console.log("5. initVideoUpload OK");
 
     const backFromAnalyze = document.querySelector("#backFromAnalyzeAI");
     const backFromHistory = document.querySelector("#backFromAIHistory");
@@ -934,31 +1073,26 @@ async function initVideosModule() {
     const filter = document.querySelector("#analyzeCategoryFilter");
     const newAnalysisBtn = document.querySelector("#newAnalysisBtn");
 
-  backFromAnalyze?.addEventListener("click", () => {
-    showVideosMain();
-  });
+    backFromAnalyze?.addEventListener("click", showVideosMain);
+    backFromHistory?.addEventListener("click", showVideosMain);
 
-  backFromHistory?.addEventListener("click", () => {
-    showVideosMain();
-  });
+    analyzeBtn?.addEventListener("click", async () => {
+        console.log("CLICK ANALIZAR IA");
+        await showAnalyzeAI();
+    });
 
-  analyzeBtn?.addEventListener("click", () => {
-    showAnalyzeAI();
-  });
+    historyBtn?.addEventListener("click", async () => {
+        await showAIHistory();
+    });
 
-  historyBtn?.addEventListener("click", () => {
-    showAIHistory();
-  });
+    filter?.addEventListener("change", renderAnalyzeVideos);
 
-  filter?.addEventListener("change", renderAnalyzeVideos);
+    newAnalysisBtn?.addEventListener("click", async () => {
+        document.querySelector("#analyzeResultsPanel").hidden = true;
+        await showAnalyzeAI();
+    });
 
-  newAnalysisBtn?.addEventListener("click", () => {
-    const resultsPanel = document.querySelector("#analyzeResultsPanel");
-    if (resultsPanel) resultsPanel.hidden = true;
-    showAnalyzeAI();
-  });
-
-  initVideoUpload();
+    console.log("6. FIN initVideosModule");
 }
 
 initVideosModule().catch(console.error);

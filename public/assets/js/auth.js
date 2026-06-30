@@ -214,7 +214,9 @@ provider.setCustomParameters({
 
         const cred = await auth.signInWithPopup(provider);
 
-        const idToken = await cred.user.getIdToken(true);
+    await cred.user.reload();
+
+const idToken = await cred.user.getIdToken(true);
 
         const response = await fetch('/api/auth/firebase', {
             method: 'POST',

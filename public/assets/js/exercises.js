@@ -55,12 +55,12 @@ async function loadCategories() {
             summary: exercise.instructions,
             description: exercise.description,
             help: exercise.tips,
-            level: "Intermedio",
+           
 
             time:
                 exercise.measure_type === "time"
-                    ? `${exercise.duration_secs} segundos`
-                    : `${exercise.reps} repeticiones`
+                    ? `${exercise.duration_secs ? `${exercise.duration_secs} s` : "Sin temporizador"}`
+                    : `${exercise.reps ? `${exercise.reps} repeticiones` : "Sin repeticiones"}`
 
         }))
 
@@ -94,7 +94,10 @@ function getCompletedExercises() {
 function syncExerciseProgress() {
   if (!userKey(COMPLETED_EXERCISES_BASE)) return;
   const completed = getCompletedExercises();
-  const progress = Math.round((completed.length / getTotalExercises()) * 100);
+  const progress = Math.min(
+    Math.round((completedExercises / totalExercises) * 100),
+    100
+);
 
   
   progressLabel.textContent = `${progress}%`;

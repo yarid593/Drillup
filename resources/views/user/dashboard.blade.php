@@ -689,6 +689,9 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
 
 <script src="{{ asset('assets/js/auth.js') }}" defer></script>
 <script src="{{ asset('assets/js/page-protect.js') }}" defer></script>

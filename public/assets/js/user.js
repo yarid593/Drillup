@@ -545,13 +545,26 @@ function renderUsageWeek() {
 }
 
 function categoryPercentagesFromProgress() {
-  const categories = Object.keys(getExerciseCategories());
+  const categories = getExerciseCategories();
   const completed = getCompletedExercises();
-  const totalExercises = Math.max(1, getTotalExercises());
 
-  return categories.map((categoryKey) => {
-    const count = completed.filter((id) => id.startsWith(`${categoryKey}:`)).length;
-    return Math.round((count / totalExercises) * 100);
+  return Object.keys(categories).map((categoryKey) => {
+
+    const totalCategoryExercises = categories[categoryKey].length;
+
+    const completedInCategory = completed.filter(id =>
+      id.startsWith(`${categoryKey}:`)
+    );
+
+    // eliminar duplicados
+    const uniqueCompleted = [...new Set(completedInCategory)];
+
+    return Math.min(
+    100,
+    Math.round(
+        (uniqueCompleted.length / Math.max(1, totalCategoryExercises)) * 100
+    )
+);
   });
 }
 
