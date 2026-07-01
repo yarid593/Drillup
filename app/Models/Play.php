@@ -11,9 +11,14 @@ class Play extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'name',
-        'description',
-        'type',
-        'animation_url'
-    ];
+    'name',
+    'slug',
+    'description',
+    'type',
+    'animation_url',
+    'image_url',
+    'steps_json',
+    'display_order',
+    'is_active'
+];
 }

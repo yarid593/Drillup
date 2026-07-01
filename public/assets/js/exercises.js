@@ -92,20 +92,30 @@ function getCompletedExercises() {
 }
 
 function syncExerciseProgress() {
-  if (!userKey(COMPLETED_EXERCISES_BASE)) return;
-  const completed = getCompletedExercises();
-  const progress = Math.min(
-    Math.round((completedExercises / totalExercises) * 100),
-    100
-);
 
-  
+  if (!userKey(COMPLETED_EXERCISES_BASE)) return;
+
+  const completed = [...new Set(getCompletedExercises())];
+
+  const totalExercises = getTotalExercises();
+
+  const progress = Math.min(
+    Math.round(
+      (completed.length / Math.max(totalExercises, 1)) * 100
+    ),
+    100
+  );
+
   progressLabel.textContent = `${progress}%`;
   progressFill.style.width = `${progress}%`;
 
-  if (window.DrillUp && typeof DrillUp.refreshUserStats === "function") {
+  if (
+    window.DrillUp &&
+    typeof DrillUp.refreshUserStats === "function"
+  ) {
     DrillUp.refreshUserStats();
   }
+
 }
 
 function logActivity(type, label, minutes = 0) {
@@ -170,24 +180,72 @@ function allCategoryExercisesCompleted(categoryKey) {
 }
 
 function completeRoutine(categoryKey) {
-  activeRoutine = null;
-  const category = categories[categoryKey];
-  const completedRoutines = readJson(userKey(COMPLETED_ROUTINES_BASE), []);
-  completedRoutines.push({
-    categoryKey,
-    categoryTitle: category.title,
-    completedAt: new Date().toISOString(),
-    exerciseCount: category.exercises.length
-  });
-  writeJson(userKey(COMPLETED_ROUTINES_BASE), completedRoutines);
 
-  syncExerciseProgress();
-  if (window.DrillUp && typeof DrillUp.showNotification === "function") {
-    DrillUp.showNotification("🎉", "Rutina completada", `Has completado la rutina de ${category.title}.`, "celebration");
-  }
-  if (window.DrillUp && typeof DrillUp.refreshUserStats === "function") {
-    DrillUp.refreshUserStats();
-  }
+    activeRoutine = null;
+
+    const category = categories[categoryKey];
+
+    let completedRoutines = readJson(
+        userKey(COMPLETED_ROUTINES_BASE),
+        []
+    );
+
+    // Evita guardar la misma rutina dos veces
+    const alreadyCompleted = completedRoutines.some(
+        r => r.categoryKey === categoryKey
+    );
+
+    if (!alreadyCompleted) {
+
+        completedRoutines.push({
+
+            categoryKey,
+
+            categoryTitle: category.title,
+
+            completedAt: new Date().toISOString(),
+
+            exerciseCount: category.exercises.length
+
+        });
+
+        writeJson(
+            userKey(COMPLETED_ROUTINES_BASE),
+            completedRoutines
+        );
+
+    }
+
+    syncExerciseProgress();
+
+    if (
+        window.DrillUp &&
+        typeof DrillUp.showNotification === "function"
+    ) {
+
+        DrillUp.showNotification(
+
+            "🎉",
+
+            "Rutina completada",
+
+            `Has completado la rutina de ${category.title}.`,
+
+            "celebration"
+
+        );
+
+    }
+
+    if (
+        window.DrillUp &&
+        typeof DrillUp.refreshUserStats === "function"
+    ) {
+
+        DrillUp.refreshUserStats();
+
+    }
+
 }
 
 function parseDuration(text) {

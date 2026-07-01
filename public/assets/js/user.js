@@ -179,14 +179,21 @@ function logVisit() {
 function statsFromActivity() {
   const activityDays = Object.values(getActivity());
   const minutes = activityDays.reduce((total, day) => total + (day.minutes || 0), 0);
+
   const completions = getCompletedExercises().length;
   const completedRoutines = readJson(userKey(COMPLETED_ROUTINES_BASE), []);
-  const progress = Math.round((completions / Math.max(1, getTotalExercises())) * 100);
+
+  const totalExercises = Math.max(1, getTotalExercises());
+
+  const progress = Math.min(
+    Math.round((completions / totalExercises) * 100),
+    100
+  );
 
   return {
-    routines: completedRoutines.length || Math.floor(completions / 5),
+    routines: completedRoutines.length,
     exercises: completions,
-    hours: Math.floor(minutes / 60),
+    hours: +(minutes / 60).toFixed(1),
     progress
   };
 }
